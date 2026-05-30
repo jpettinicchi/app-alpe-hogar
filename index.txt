@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Alpe Ingeniería — Panel de Gestión</title>
+
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+<style>
+/* ── RESET & VARIABLES ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #0d0f14;
+  --surface:   #14171f;
+  --surface2:  #1c2030;
+  --border:    #252a38;
+  --accent:    #c8a96e;      /* oro terroso */
+  --accent2:   #4f8ef7;      /* azul eléctrico */
+  --danger:    #e05252;
+  --warn:      #e09a3a;
+  --ok:        #4caf7d;
+  --text:      #e8e4dc;
+  --muted:     #7a8099;
+  --font-head: 'DM Serif Display', serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+  --radius:    10px;
+  --shadow:    0 4px 24px rgba(0,0,0,.45);
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── SIDEBAR ── */
+#sidebar {
+  position: fixed; top: 0; left: 0;
+  width: 230px; height: 100vh;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  padding: 28px 0 20px;
+  z-index: 100;
+}
+.logo {
+  padding: 0 24px 28px;
+  border-bottom: 1px solid var(--border);
+}
+.logo h1 {
+  font-family: var(--font-head);
+  font-size: 1.25rem;
+  color: var(--accent);
+  line-height: 1.2;
+}
+.logo span {
+  font-size: .72rem;
+  color: var(--muted);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+nav { flex: 1; padding: 20px 0; }
+nav a {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 24px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: .88rem;
+  font-weight: 500;
+  border-left: 3px solid transparent;
+  transition: all .18s;
+}
+nav a:hover { color: var(--text); background: rgba(200,169,110,.06); }
+nav a.active {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  background: rgba(200,169,110,.1);
+}
+nav a svg { width: 17px; height: 17px; flex-shrink: 0; }
+.sidebar-footer {
+  padding: 16px 24px 0;
+  border-top: 1px solid var(--border);
+  font-size: .75rem; color: var(--muted);
+}
+
+/* ── MAIN ── */
+#main {
+  margin-left: 230px;
+  padding: 40px 44px;
+  min-height: 100vh;
+}
+.page { display: none; }
+.page.active { display: block; }
+
+/* ── PAGE HEADER ── */
+.page-header { margin-bottom: 32px; }
+.page-header h2 {
+  font-family: var(--font-head);
+  font-size: 2rem;
+  color: var(--accent);
+}
+.page-header p { color: var(--muted); font-size: .9rem; margin-top: 4px; }
+
+/* ── CARDS / PANELS ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  margin-bottom: 28px;
+}
+.card-title {
+  font-family: var(--font-head);
+  font-size: 1.1rem;
+  color: var(--accent);
+  margin-bottom: 20px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* ── FORMS ── */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group label {
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--muted);
+  font-weight: 500;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: .9rem;
+  padding: 10px 12px;
+  transition: border .18s;
+  outline: none;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus { border-color: var(--accent); }
+.form-group textarea { resize: vertical; min-height: 70px; }
+.form-group select option { background: var(--surface2); }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 10px 22px;
+  border-radius: 6px;
+  font-size: .88rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all .18s;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #0d0f14;
+}
+.btn-primary:hover { background: #d4b87c; transform: translateY(-1px); }
+.btn-danger {
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  padding: 5px 12px;
+  font-size: .78rem;
+}
+.btn-danger:hover { background: rgba(224,82,82,.12); }
+
+/* ── TABLES ── */
+.table-wrap { overflow-x: auto; border-radius: var(--radius); }
+table {
+  width: 100%; border-collapse: collapse;
+  font-size: .86rem;
+}
+thead th {
+  background: var(--surface2);
+  color: var(--muted);
+  font-size: .73rem;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background .14s;
+}
+tbody tr:hover { background: rgba(255,255,255,.03); }
+tbody td { padding: 11px 14px; }
+
+/* ── BADGES ── */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: .74rem;
+  font-weight: 600;
+}
+.badge-ok      { background: rgba(76,175,125,.18); color: var(--ok); }
+.badge-warn    { background: rgba(224,154,58,.18); color: var(--warn); }
+.badge-danger  { background: rgba(224,82,82,.18);  color: var(--danger); }
+.badge-blue    { background: rgba(79,142,247,.18); color: var(--accent2); }
+.badge-muted   { background: rgba(122,128,153,.15); color: var(--muted); }
+
+/* ── STAT BOXES ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.stat-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 20px;
+}
+.stat-box .stat-label {
+  font-size: .73rem;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.stat-box .stat-value {
+  font-family: var(--font-mono);
+  font-size: 1.45rem;
+  font-weight: 500;
+}
+.stat-box .stat-sub { font-size: .77rem; color: var(--muted); margin-top: 4px; }
+
+/* ── CHARTS ── */
+.chart-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+@media (max-width: 900px) { .chart-grid { grid-template-columns: 1fr; } }
+.chart-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+.chart-box h3 {
+  font-family: var(--font-head);
+  font-size: .95rem;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+/* ── FLUJO PROYECTADO ── */
+.flujo-table tbody td { font-family: var(--font-mono); font-size: .83rem; }
+.flujo-neg { color: var(--danger); }
+.flujo-pos { color: var(--ok); }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed; bottom: 28px; right: 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 22px;
+  font-size: .88rem;
+  box-shadow: var(--shadow);
+  transform: translateY(80px);
+  opacity: 0;
+  transition: all .3s ease;
+  z-index: 999;
+  max-width: 320px;
+}
+#toast.show { transform: translateY(0); opacity: 1; }
+#toast.success { border-color: var(--ok); color: var(--ok); }
+#toast.error   { border-color: var(--danger); color: var(--danger); }
+
+/* ── SETUP BANNER ── */
+#setup-banner {
+  background: rgba(224,154,58,.1);
+  border: 1px solid var(--warn);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 28px;
+  font-size: .88rem;
+  color: var(--warn);
+  display: none;
+}
+#setup-banner.show { display: block; }
+
+/* ── LOADER ── */
+.loader {
+  display: inline-block;
+  width: 18px; height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 700px) {
+  #sidebar { width: 60px; }
+  #sidebar .logo span,
+  #sidebar nav a span,
+  #sidebar .sidebar-footer { display: none; }
+  #main { margin-left: 60px; padding: 24px 18px; }
+  .form-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ SIDEBAR ══════════════════ -->
+<aside id="sidebar">
+  <div class="logo">
+    <h1>Alpe<br>Ingeniería</h1>
+    <span>Panel de Gestión</span>
+  </div>
+  <nav>
+    <a href="#" class="active" data-page="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span>Dashboard</span>
+    </a>
+    <a href="#" data-page="horas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 15.5"/></svg>
+      <span>Control de Horas</span>
+    </a>
+    <a href="#" data-page="movimientos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 1 0 0 7h5a3.5 3.5 0 1 1 0 7H6"/></svg>
+      <span>Movimientos</span>
+    </a>
+    <a href="#" data-page="flujo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span>Flujo de Fondos</span>
+    </a>
+    <a href="#" data-page="config">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>Configuración</span>
+    </a>
+  </nav>
+  <div class="sidebar-footer">v1.0 · 2025</div>
+</aside>
+
+<!-- ══════════════════ MAIN ══════════════════ -->
+<main id="main">
+
+  <div id="setup-banner">
+    ⚠️ <strong>Credenciales no configuradas.</strong> Abrí la página de Configuración e ingresá tu URL y Anon Key de Supabase para conectar la app.
+  </div>
+
+  <!-- ── DASHBOARD ── -->
+  <section class="page active" id="page-dashboard">
+    <div class="page-header">
+      <h2>Dashboard</h2>
+      <p>Resumen consolidado de Alpe Ingeniería y Hogar</p>
+    </div>
+
+    <div class="stats-row" id="dash-stats">
+      <div class="stat-box">
+        <div class="stat-label">Ingresos del mes</div>
+        <div class="stat-value flujo-pos" id="dash-ingresos">$ —</div>
+        <div class="stat-sub">Alpe + Hogar</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Egresos del mes</div>
+        <div class="stat-value flujo-neg" id="dash-egresos">$ —</div>
+        <div class="stat-sub">Alpe + Hogar</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Balance neto</div>
+        <div class="stat-value" id="dash-balance">$ —</div>
+        <div class="stat-sub">Mes en curso</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Proyectos activos</div>
+        <div class="stat-value" id="dash-proyectos">—</div>
+        <div class="stat-sub">Con horas registradas</div>
+      </div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart-box">
+        <h3>Ingresos vs Egresos — por Origen</h3>
+        <canvas id="chart-bar" height="240"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>Tendencia Cashflow (próximos 6 meses)</h3>
+        <canvas id="chart-line" height="240"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── HORAS ── -->
+  <section class="page" id="page-horas">
+    <div class="page-header">
+      <h2>Control de Horas</h2>
+      <p>Alpe Ingeniería — registro y seguimiento por proyecto</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 15.5"/></svg>
+        Nueva entrada de horas
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Cliente / Proyecto</label>
+          <input type="text" id="h-cliente" placeholder="Ej: Municipio San Martín" />
+        </div>
+        <div class="form-group">
+          <label>Fecha</label>
+          <input type="date" id="h-fecha" />
+        </div>
+        <div class="form-group">
+          <label>Hs. Presupuestadas</label>
+          <input type="number" id="h-presup" min="0" step="0.5" placeholder="40" />
+        </div>
+        <div class="form-group">
+          <label>Hs. Reales</label>
+          <input type="number" id="h-reales" min="0" step="0.5" placeholder="35" />
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1">
+          <label>Detalle de la tarea</label>
+          <textarea id="h-detalle" placeholder="Descripción de las tareas realizadas..."></textarea>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="guardarHora()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Registrar horas
+      </button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Registro de horas</div>
+      <div class="table-wrap">
+        <table id="tabla-horas">
+          <thead>
+            <tr>
+              <th>Cliente / Proyecto</th>
+              <th>Fecha</th>
+              <th>Hs. Presup.</th>
+              <th>Hs. Reales</th>
+              <th>Desvío</th>
+              <th>Estado</th>
+              <th>Detalle</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="horas-body">
+            <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:28px"><span class="loader"></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── MOVIMIENTOS ── -->
+  <section class="page" id="page-movimientos">
+    <div class="page-header">
+      <h2>Movimientos Financieros</h2>
+      <p>Ingresos, egresos y gastos de viaje — Hogar y Alpe Ingeniería</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 1 0 0 7h5a3.5 3.5 0 1 1 0 7H6"/></svg>
+        Nuevo movimiento
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Fecha</label>
+          <input type="date" id="m-fecha" />
+        </div>
+        <div class="form-group">
+          <label>Origen</label>
+          <select id="m-origen">
+            <option value="Alpe Ingeniería">Alpe Ingeniería</option>
+            <option value="Hogar">Hogar</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tipo</label>
+          <select id="m-tipo">
+            <option value="Ingreso">Ingreso</option>
+            <option value="Egreso">Egreso</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Categoría</label>
+          <select id="m-categoria">
+            <option value="Honorarios">Honorarios</option>
+            <option value="Viáticos-Uber/Aéreos">Viáticos / Uber / Aéreos</option>
+            <option value="Estructura">Estructura</option>
+            <option value="Gastos Generales">Gastos Generales</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Monto en Pesos $</label>
+          <input type="number" id="m-pesos" min="0" step="0.01" placeholder="0.00" />
+        </div>
+        <div class="form-group">
+          <label>Monto en USD $</label>
+          <input type="number" id="m-usd" min="0" step="0.01" placeholder="0.00" />
+        </div>
+        <div class="form-group">
+          <label>Estado</label>
+          <select id="m-estado">
+            <option value="Pendiente">Pendiente</option>
+            <option value="Facturado">Facturado</option>
+            <option value="Pagado">Pagado</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Descripción</label>
+          <input type="text" id="m-desc" placeholder="Concepto breve" />
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="guardarMovimiento()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Registrar movimiento
+      </button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Historial de movimientos</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th><th>Origen</th><th>Tipo</th><th>Categoría</th>
+              <th>Pesos $</th><th>USD $</th><th>Estado</th><th>Descripción</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="mov-body">
+            <tr><td colspan="9" style="text-align:center;color:var(--muted);padding:28px"><span class="loader"></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FLUJO DE FONDOS ── -->
+  <section class="page" id="page-flujo">
+    <div class="page-header">
+      <h2>Flujo de Fondos Futuro</h2>
+      <p>Proyecciones, deudas y cashflow proyectado</p>
+    </div>
+
+    <!-- Parámetros -->
+    <div class="card">
+      <div class="card-title">Parámetros de proyección</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Inflación mensual estimada (%)</label>
+          <input type="number" id="p-inflacion" min="0" max="100" step="0.1" placeholder="5.0" />
+        </div>
+        <div class="form-group">
+          <label>Cuota UVA base ($ actuales)</label>
+          <input type="number" id="p-uva" min="0" step="100" placeholder="80000" />
+        </div>
+        <div class="form-group">
+          <label>Deuda total Alejandro (USD)</label>
+          <input type="number" id="p-deuda-ale" min="0" step="100" placeholder="4000" />
+        </div>
+        <div class="form-group">
+          <label>Cuota Alejandro (USD/mes)</label>
+          <input type="number" id="p-cuota-ale" min="0" step="50" value="400" />
+        </div>
+        <div class="form-group">
+          <label>Tipo de cambio ($/USD)</label>
+          <input type="number" id="p-tc" min="0" step="10" placeholder="1000" />
+        </div>
+        <div class="form-group">
+          <label>Ingreso mensual esperado ($)</label>
+          <input type="number" id="p-ingreso-esp" min="0" step="1000" placeholder="500000" />
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="guardarParams()">
+        Guardar y proyectar
+      </button>
+    </div>
+
+    <!-- Tabla UVA proyectada -->
+    <div class="card">
+      <div class="card-title">📊 Proyección Crédito UVA (12 meses)</div>
+      <div class="table-wrap">
+        <table class="flujo-table">
+          <thead><tr><th>Mes</th><th>Cuota UVA $</th><th>Cuota Alejandro $</th><th>Total Compromisos $</th><th>Ingreso Esp. $</th><th>Saldo $</th></tr></thead>
+          <tbody id="flujo-body">
+            <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">Completá los parámetros y guardá para ver la proyección.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CONFIGURACIÓN ── -->
+  <section class="page" id="page-config">
+    <div class="page-header">
+      <h2>Configuración</h2>
+      <p>Credenciales de Supabase — se guardan solo en este navegador</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔐 Conexión Supabase</div>
+      <p style="color:var(--muted);font-size:.86rem;margin-bottom:20px;line-height:1.6">
+        Ingresá tus credenciales de Supabase. Se almacenan en <code style="color:var(--accent)">localStorage</code> del navegador —
+        nunca se envían a ningún servidor externo. Para producción en Vercel,
+        podés además declarar <code style="color:var(--accent)">SUPABASE_URL</code> y <code style="color:var(--accent)">SUPABASE_KEY</code>
+        como variables de entorno (ver instrucciones abajo).
+      </p>
+      <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="form-group">
+          <label>Supabase URL</label>
+          <input type="text" id="cfg-url" placeholder="https://xxxx.supabase.co" />
+        </div>
+        <div class="form-group">
+          <label>Supabase Anon Key</label>
+          <input type="password" id="cfg-key" placeholder="eyJhbGci..." />
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="guardarConfig()">Guardar y reconectar</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 Variables de entorno en Vercel (producción)</div>
+      <div style="font-size:.86rem;color:var(--muted);line-height:1.8">
+        <p>Si desplegás en Vercel y querés que las credenciales no estén en el código:</p>
+        <ol style="padding-left:18px;margin-top:10px;display:flex;flex-direction:column;gap:6px">
+          <li>Ir a tu proyecto en Vercel → <strong>Settings → Environment Variables</strong></li>
+          <li>Agregar <code style="color:var(--accent)">SUPABASE_URL</code> con el valor de tu URL</li>
+          <li>Agregar <code style="color:var(--accent)">SUPABASE_KEY</code> con tu Anon Key</li>
+          <li>Como este es un HTML estático, las vars de entorno de Vercel <em>no se inyectan automáticamente</em> en el HTML cliente. La forma más segura es usar el formulario de configuración de esta página (localStorage) o bien crear un pequeño <code style="color:var(--accent)">api/config.js</code> como endpoint serverless en Vercel que devuelva las credenciales a la app.</li>
+        </ol>
+        <p style="margin-top:14px;padding:12px 16px;background:var(--surface2);border-radius:6px;border-left:3px solid var(--accent)">
+          <strong>Recomendación para app personal:</strong> usar localStorage (formulario de arriba) es suficiente y sencillo. La Anon Key de Supabase está diseñada para ser pública — la seguridad real la dan las Row Level Security (RLS) policies en Supabase.
+        </p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div id="toast"></div>
+
+<!-- ══════════════════ JAVASCRIPT ══════════════════ -->
+<script>
+// ──────────────────────────────────────────────
+// 1. INICIALIZACIÓN DE SUPABASE
+// ──────────────────────────────────────────────
+let sbClient = null;
+
+function initSupabase() {
+  const url = localStorage.getItem('sb_url') || '';
+  const key = localStorage.getItem('sb_key') || '';
+  if (!url || !key) {
+    document.getElementById('setup-banner').classList.add('show');
+    return false;
+  }
+  try {
+    sbClient = window.supabase.createClient(url, key);
+    document.getElementById('setup-banner').classList.remove('show');
+    return true;
+  } catch(e) {
+    console.error('Supabase init error', e);
+    return false;
+  }
+}
+
+// ──────────────────────────────────────────────
+// 2. NAVEGACIÓN
+// ──────────────────────────────────────────────
+const pages = { dashboard: 'page-dashboard', horas: 'page-horas', movimientos: 'page-movimientos', flujo: 'page-flujo', config: 'page-config' };
+
+document.querySelectorAll('nav a').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const p = a.dataset.page;
+    document.querySelectorAll('nav a').forEach(x => x.classList.remove('active'));
+    a.classList.add('active');
+    Object.values(pages).forEach(id => document.getElementById(id).classList.remove('active'));
+    document.getElementById(pages[p]).classList.add('active');
+    if (p === 'dashboard') loadDashboard();
+    if (p === 'horas')     cargarHoras();
+    if (p === 'movimientos') cargarMovimientos();
+    if (p === 'flujo')     cargarParams();
+    if (p === 'config')    cargarCamposConfig();
+  });
+});
+
+// ──────────────────────────────────────────────
+// 3. TOAST
+// ──────────────────────────────────────────────
+function toast(msg, type='success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => el.className = '', 3500);
+}
+
+// ──────────────────────────────────────────────
+// 4. HELPERS
+// ──────────────────────────────────────────────
+const fmt$ = n => '$ ' + (n||0).toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
+const fmtD = d => d ? new Date(d+'T00:00:00').toLocaleDateString('es-AR') : '—';
+const today = () => new Date().toISOString().split('T')[0];
+
+function setBadgeEstado(e) {
+  const map = { Pendiente:'badge-warn', Facturado:'badge-blue', Pagado:'badge-ok' };
+  return `<span class="badge ${map[e]||'badge-muted'}">${e}</span>`;
+}
+
+// ──────────────────────────────────────────────
+// 5. HORAS
+// ──────────────────────────────────────────────
+document.getElementById('h-fecha').value = today();
+
+async function guardarHora() {
+  if (!sbClient) return toast('Configurá Supabase primero','error');
+  const row = {
+    cliente: document.getElementById('h-cliente').value.trim(),
+    fecha:   document.getElementById('h-fecha').value,
+    hs_presup: parseFloat(document.getElementById('h-presup').value)||0,
+    hs_reales: parseFloat(document.getElementById('h-reales').value)||0,
+    detalle: document.getElementById('h-detalle').value.trim()
+  };
+  if (!row.cliente || !row.fecha) return toast('Completá cliente y fecha','error');
+  const {error} = await sbClient.from('horas').insert([row]);
+  if (error) return toast('Error: '+error.message,'error');
+  toast('Horas registradas ✓');
+  ['h-cliente','h-presup','h-reales','h-detalle'].forEach(id => document.getElementById(id).value='');
+  cargarHoras();
+}
+
+async function cargarHoras() {
+  if (!sbClient) return;
+  const {data, error} = await sbClient.from('horas').select('*').order('fecha', {ascending:false});
+  const tb = document.getElementById('horas-body');
+  if (error) { tb.innerHTML = `<tr><td colspan="8" style="color:var(--danger);text-align:center">${error.message}</td></tr>`; return; }
+  if (!data?.length) { tb.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:28px">Sin registros aún</td></tr>'; return; }
+  tb.innerHTML = data.map(r => {
+    const desvio = r.hs_reales - r.hs_presup;
+    const pct    = r.hs_presup ? (r.hs_reales / r.hs_presup * 100) : 100;
+    let badge = '<span class="badge badge-ok">OK</span>';
+    if (pct >= 90 && pct < 100) badge = '<span class="badge badge-warn">⚠ ~Límite</span>';
+    if (pct >= 100)              badge = '<span class="badge badge-danger">🔴 Excedido</span>';
+    const ds = desvio >= 0 ? `<span style="color:var(--danger)">+${desvio.toFixed(1)}</span>` : `<span style="color:var(--ok)">${desvio.toFixed(1)}</span>`;
+    return `<tr>
+      <td>${r.cliente}</td>
+      <td>${fmtD(r.fecha)}</td>
+      <td>${r.hs_presup}</td>
+      <td>${r.hs_reales}</td>
+      <td>${ds}</td>
+      <td>${badge}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${r.detalle||'—'}</td>
+      <td><button class="btn btn-danger" onclick="borrarHora(${r.id})">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function borrarHora(id) {
+  if (!confirm('¿Eliminar este registro?')) return;
+  await sbClient.from('horas').delete().eq('id', id);
+  toast('Eliminado','error');
+  cargarHoras();
+}
+
+// ──────────────────────────────────────────────
+// 6. MOVIMIENTOS
+// ──────────────────────────────────────────────
+document.getElementById('m-fecha').value = today();
+
+async function guardarMovimiento() {
+  if (!sbClient) return toast('Configurá Supabase primero','error');
+  const row = {
+    fecha:       document.getElementById('m-fecha').value,
+    origen:      document.getElementById('m-origen').value,
+    tipo:        document.getElementById('m-tipo').value,
+    categoria:   document.getElementById('m-categoria').value,
+    monto_pesos: parseFloat(document.getElementById('m-pesos').value)||0,
+    monto_usd:   parseFloat(document.getElementById('m-usd').value)||0,
+    estado:      document.getElementById('m-estado').value,
+    descripcion: document.getElementById('m-desc').value.trim()
+  };
+  if (!row.fecha) return toast('Completá la fecha','error');
+  const {error} = await sbClient.from('movimientos').insert([row]);
+  if (error) return toast('Error: '+error.message,'error');
+  toast('Movimiento registrado ✓');
+  ['m-pesos','m-usd','m-desc'].forEach(id => document.getElementById(id).value='');
+  cargarMovimientos();
+}
+
+async function cargarMovimientos() {
+  if (!sbClient) return;
+  const {data, error} = await sbClient.from('movimientos').select('*').order('fecha', {ascending:false});
+  const tb = document.getElementById('mov-body');
+  if (error) { tb.innerHTML = `<tr><td colspan="9" style="color:var(--danger);text-align:center">${error.message}</td></tr>`; return; }
+  if (!data?.length) { tb.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:28px">Sin registros aún</td></tr>'; return; }
+  tb.innerHTML = data.map(r => {
+    const tipoColor = r.tipo === 'Ingreso' ? 'badge-ok' : 'badge-danger';
+    const origColor = r.origen === 'Alpe Ingeniería' ? 'badge-blue' : 'badge-muted';
+    return `<tr>
+      <td>${fmtD(r.fecha)}</td>
+      <td><span class="badge ${origColor}">${r.origen}</span></td>
+      <td><span class="badge ${tipoColor}">${r.tipo}</span></td>
+      <td>${r.categoria}</td>
+      <td style="font-family:var(--font-mono)">${r.monto_pesos ? fmt$(r.monto_pesos) : '—'}</td>
+      <td style="font-family:var(--font-mono)">${r.monto_usd ? 'U$D '+r.monto_usd.toLocaleString('es-AR') : '—'}</td>
+      <td>${setBadgeEstado(r.estado)}</td>
+      <td style="color:var(--muted)">${r.descripcion||'—'}</td>
+      <td><button class="btn btn-danger" onclick="borrarMov(${r.id})">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function borrarMov(id) {
+  if (!confirm('¿Eliminar este movimiento?')) return;
+  await sbClient.from('movimientos').delete().eq('id', id);
+  toast('Eliminado','error');
+  cargarMovimientos();
+}
+
+// ──────────────────────────────────────────────
+// 7. FLUJO DE FONDOS / PROYECCIONES
+// ──────────────────────────────────────────────
+async function cargarParams() {
+  if (!sbClient) return;
+  const {data} = await sbClient.from('proyeccion_params').select('*').eq('id',1).single();
+  if (!data) return;
+  document.getElementById('p-inflacion').value  = data.inflacion_mensual_pct||5;
+  document.getElementById('p-uva').value        = data.uva_cuota_base_pesos||0;
+  document.getElementById('p-deuda-ale').value  = data.deuda_alejandro_usd||0;
+  document.getElementById('p-cuota-ale').value  = data.cuota_alejandro_usd||400;
+  document.getElementById('p-tc').value         = data.tipo_cambio||1000;
+  document.getElementById('p-ingreso-esp').value= data.ingreso_esperado_pesos||0;
+  calcularFlujo(data);
+}
+
+async function guardarParams() {
+  if (!sbClient) return toast('Configurá Supabase primero','error');
+  const params = {
+    inflacion_mensual_pct: parseFloat(document.getElementById('p-inflacion').value)||5,
+    uva_cuota_base_pesos:  parseFloat(document.getElementById('p-uva').value)||0,
+    deuda_alejandro_usd:   parseFloat(document.getElementById('p-deuda-ale').value)||0,
+    cuota_alejandro_usd:   parseFloat(document.getElementById('p-cuota-ale').value)||400,
+    tipo_cambio:           parseFloat(document.getElementById('p-tc').value)||1000,
+    ingreso_esperado_pesos:parseFloat(document.getElementById('p-ingreso-esp').value)||0,
+    updated_at: new Date().toISOString()
+  };
+  const {error} = await sbClient.from('proyeccion_params').upsert({id:1,...params});
+  if (error) return toast('Error: '+error.message,'error');
+  toast('Parámetros guardados ✓');
+  calcularFlujo(params);
+}
+
+function calcularFlujo(p) {
+  const tb = document.getElementById('flujo-body');
+  const inflacion = (p.inflacion_mensual_pct||5) / 100;
+  const tc        = p.tipo_cambio || 1000;
+  const cuotaAleUSD   = p.cuota_alejandro_usd || 400;
+  const ingresoEsp    = p.ingreso_esperado_pesos || 0;
+
+  let deudaAle    = p.deuda_alejandro_usd || 0;
+  let cuotaUVA    = p.uva_cuota_base_pesos || 0;
+  const meses     = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const hoy       = new Date();
+
+  let rows = '';
+  for (let i = 0; i < 12; i++) {
+    const mes    = meses[(hoy.getMonth() + i) % 12];
+    cuotaUVA     = cuotaUVA * (1 + inflacion);
+    const cuotaAlePesos = Math.min(cuotaAleUSD, deudaAle) * tc;
+    deudaAle     = Math.max(0, deudaAle - cuotaAleUSD);
+    const totalComp = cuotaUVA + cuotaAlePesos;
+    const saldo     = ingresoEsp - totalComp;
+    const saldoCls  = saldo >= 0 ? 'flujo-pos' : 'flujo-neg';
+    rows += `<tr>
+      <td>${mes} ${hoy.getFullYear() + Math.floor((hoy.getMonth() + i) / 12)}</td>
+      <td>${fmt$(cuotaUVA)}</td>
+      <td>${cuotaAlePesos ? fmt$(cuotaAlePesos) : '—'}</td>
+      <td>${fmt$(totalComp)}</td>
+      <td>${fmt$(ingresoEsp)}</td>
+      <td class="${saldoCls}">${fmt$(saldo)}</td>
+    </tr>`;
+  }
+  tb.innerHTML = rows;
+  // actualizar gráfico de línea con nueva proyección
+  actualizarChartLine(p);
+}
+
+// ──────────────────────────────────────────────
+// 8. CONFIGURACIÓN SUPABASE
+// ──────────────────────────────────────────────
+function cargarCamposConfig() {
+  document.getElementById('cfg-url').value = localStorage.getItem('sb_url')||'';
+  document.getElementById('cfg-key').value = localStorage.getItem('sb_key')||'';
+}
+
+function guardarConfig() {
+  const url = document.getElementById('cfg-url').value.trim();
+  const key = document.getElementById('cfg-key').value.trim();
+  if (!url || !key) return toast('Ingresá URL y Key','error');
+  localStorage.setItem('sb_url', url);
+  localStorage.setItem('sb_key', key);
+  if (initSupabase()) {
+    toast('Conexión exitosa ✓');
+  } else {
+    toast('Error al conectar — verificá los datos','error');
+  }
+}
+
+// ──────────────────────────────────────────────
+// 9. DASHBOARD + CHARTS
+// ──────────────────────────────────────────────
+let chartBar  = null;
+let chartLine = null;
+
+async function loadDashboard() {
+  if (!sbClient) return;
+  const now   = new Date();
+  const desde = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+
+  const {data: movs} = await sbClient.from('movimientos').select('*').gte('fecha', desde);
+  const {data: horas} = await sbClient.from('horas').select('cliente');
+
+  const ingresos = (movs||[]).filter(m => m.tipo==='Ingreso').reduce((s,m) => s+(m.monto_pesos||0),0);
+  const egresos  = (movs||[]).filter(m => m.tipo==='Egreso').reduce((s,m)  => s+(m.monto_pesos||0),0);
+  const balance  = ingresos - egresos;
+  const proyectos = new Set((horas||[]).map(h => h.cliente)).size;
+
+  document.getElementById('dash-ingresos').textContent  = fmt$(ingresos);
+  document.getElementById('dash-egresos').textContent   = fmt$(egresos);
+  document.getElementById('dash-balance').textContent   = fmt$(balance);
+  document.getElementById('dash-balance').style.color = balance >= 0 ? 'var(--ok)' : 'var(--danger)';
+  document.getElementById('dash-proyectos').textContent = proyectos;
+
+  // datos para gráfico de barras
+  const orgs = ['Alpe Ingeniería','Hogar'];
+  const barIngresos = orgs.map(o => (movs||[]).filter(m => m.origen===o && m.tipo==='Ingreso').reduce((s,m)=>s+(m.monto_pesos||0),0));
+  const barEgresos  = orgs.map(o => (movs||[]).filter(m => m.origen===o && m.tipo==='Egreso').reduce((s,m)=>s+(m.monto_pesos||0),0));
+
+  if (chartBar) chartBar.destroy();
+  const ctxBar = document.getElementById('chart-bar').getContext('2d');
+  chartBar = new Chart(ctxBar, {
+    type: 'bar',
+    data: {
+      labels: orgs,
+      datasets: [
+        { label: 'Ingresos $', data: barIngresos, backgroundColor: 'rgba(76,175,125,.75)', borderRadius: 6 },
+        { label: 'Egresos $',  data: barEgresos,  backgroundColor: 'rgba(224,82,82,.65)',  borderRadius: 6 }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#7a8099', font: {family:'DM Sans'} } } },
+      scales: {
+        x: { ticks: { color: '#7a8099' }, grid: { color: '#252a38' } },
+        y: { ticks: { color: '#7a8099', callback: v => '$'+v.toLocaleString('es-AR') }, grid: { color: '#252a38' } }
+      }
+    }
+  });
+
+  // carga params para gráfico de línea
+  const {data: params} = await sbClient.from('proyeccion_params').select('*').eq('id',1).single();
+  if (params) actualizarChartLine(params);
+}
+
+function actualizarChartLine(p) {
+  const ctx = document.getElementById('chart-line');
+  if (!ctx) return;
+  const inflacion = (p.inflacion_mensual_pct||5)/100;
+  const tc        = p.tipo_cambio||1000;
+  const cuotaAleUSD = p.cuota_alejandro_usd||400;
+  const ingresoEsp  = p.ingreso_esperado_pesos||0;
+  let cuotaUVA      = p.uva_cuota_base_pesos||0;
+  let deudaAle      = p.deuda_alejandro_usd||0;
+  const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const hoy   = new Date();
+  const labels=[], saldos=[];
+
+  for (let i=0;i<6;i++) {
+    labels.push(meses[(hoy.getMonth()+i)%12]);
+    cuotaUVA = cuotaUVA*(1+inflacion);
+    const cuotaAlePesos = Math.min(cuotaAleUSD,deudaAle)*tc;
+    deudaAle = Math.max(0,deudaAle-cuotaAleUSD);
+    saldos.push(ingresoEsp - cuotaUVA - cuotaAlePesos);
+  }
+
+  if (chartLine) chartLine.destroy();
+  chartLine = new Chart(ctx.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Saldo proyectado $',
+        data: saldos,
+        borderColor: '#c8a96e',
+        backgroundColor: 'rgba(200,169,110,.12)',
+        pointBackgroundColor: '#c8a96e',
+        tension: 0.38,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color:'#7a8099', font:{family:'DM Sans'} } } },
+      scales: {
+        x: { ticks:{ color:'#7a8099' }, grid:{ color:'#252a38' } },
+        y: { ticks:{ color:'#7a8099', callback: v=>'$'+v.toLocaleString('es-AR') }, grid:{ color:'#252a38' } }
+      }
+    }
+  });
+}
+
+// ──────────────────────────────────────────────
+// 10. INIT
+// ──────────────────────────────────────────────
+(function init() {
+  initSupabase();
+  if (sbClient) {
+    loadDashboard();
+  }
+  // poner fecha de hoy en campos de fecha al cargar
+  document.getElementById('h-fecha').value = today();
+  document.getElementById('m-fecha').value = today();
+})();
+</script>
+</body>
+</html>
