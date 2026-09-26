@@ -332,7 +332,7 @@ tbody td { padding: 11px 14px; }
       <span>Cierre para Admin</span>
     </a>
     <a href="#" data-page="config">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l-.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l.06-.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       <span>Configuración</span>
     </a>
   </nav>
@@ -343,7 +343,7 @@ tbody td { padding: 11px 14px; }
 <main id="main">
 
   <div id="setup-banner">
-    ⚠️ <strong>¿Por qué aparece este cartel?</strong> Este mensaje aparece porque la aplicación necesita conectarse a tu base de datos en <strong>Supabase</strong> para guardar tus registros. Para solucionarlo, ve a la sección <strong>Configuración</strong> en el menú lateral e ingresa tu URL y Clave de Supabase (Anon Key). Una vez guardadas, este cartel desaparecerá automáticamente.
+    ⚠️ <strong>Credenciales no configuradas.</strong> Ingresá a la sección Configuración para conectar Supabase.
   </div>
 
   <!-- ── DASHBOARD ── -->
@@ -580,7 +580,7 @@ tbody td { padding: 11px 14px; }
           <thead>
             <tr>
               <th>Fecha</th><th>Tipo</th><th>Categoría</th>
-              <th>Pesos $</th><th>USD $</th><th>Estado</th><th>Descripción</th><th></th>
+              <th>Pesos $</th><th>USD$</th><th>Estado</th><th>Descripción</th><th></th>
             </tr>
           </thead>
           <tbody id="mov-body">
@@ -657,9 +657,9 @@ tbody td { padding: 11px 14px; }
 let sbClient = null;
 
 function initSupabase() {
-  const url = localStorage.getItem('sb_url') || '';
-  const key = localStorage.getItem('sb_key') || '';
-  if (!url || !key) {
+  const url = (localStorage.getItem('sb_url') || '').trim();
+  const key = (localStorage.getItem('sb_key') || '').trim();
+  if (!url || !key || !url.startsWith('https://')) {
     document.getElementById('setup-banner').classList.add('show');
     return false;
   }
@@ -668,6 +668,7 @@ function initSupabase() {
     document.getElementById('setup-banner').classList.remove('show');
     return true;
   } catch(e) {
+    console.error(e);
     return false;
   }
 }
@@ -711,7 +712,7 @@ document.getElementById('m-fecha').value = today();
 
 // ── CLIENTES ──
 async function guardarCliente() {
-  if (!sbClient) return toast('Configurá Supabase primero','error');
+  if (!sbClient) return toast('Configurá Supabase en Configuración','error');
   const row = {
     codigo: parseInt(document.getElementById('c-codigo').value),
     nombre: document.getElementById('c-nombre').value.trim(),
@@ -765,7 +766,7 @@ async function cargarSelectCierre() {
 
 // ── HORAS ──
 async function guardarHora() {
-  if (!sbClient) return toast('Configurá Supabase primero','error');
+  if (!sbClient) return toast('Configurá Supabase en Configuración','error');
   const row = {
     cliente: document.getElementById('h-cliente-select').value,
     fecha: document.getElementById('h-fecha').value,
@@ -863,7 +864,7 @@ async function borrarHora(id) {
 
 // ── MOVIMIENTOS E INVERSIONES ──
 async function guardarMovimiento() {
-  if (!sbClient) return toast('Configurá Supabase primero','error');
+  if (!sbClient) return toast('Configurá Supabase en Configuración','error');
   const row = {
     fecha: document.getElementById('m-fecha').value,
     tipo: document.getElementById('m-tipo').value,
@@ -915,7 +916,7 @@ async function borrarMov(id) {
 
 // ── CIERRE PARA ADMINISTRACIÓN ──
 async function generarReporteAdmin() {
-  if (!sbClient) return toast('Configurá Supabase primero','error');
+  if (!sbClient) return toast('Configurá Supabase en Configuración','error');
   const cliente = document.getElementById('cierre-cliente-select').value;
   const mesAnio = document.getElementById('cierre-mes-anio').value;
   if (!cliente || !mesAnio) return toast('Seleccioná cliente y mes','error');
@@ -998,13 +999,16 @@ function cargarCamposConfig() {
 function guardarConfig() {
   const url = document.getElementById('cfg-url').value.trim();
   const key = document.getElementById('cfg-key').value.trim();
-  if (!url || !key) return toast('Ingresá URL y Key','error');
+  if (!url || !key || !url.startsWith('https://')) {
+    return toast('Ingresá una URL válida (debe empezar con https://)','error');
+  }
   localStorage.setItem('sb_url', url);
   localStorage.setItem('sb_key', key);
   if (initSupabase()) {
-    toast('Conexión exitosa ✓');
+    toast('¡Conexión y credenciales guardadas con éxito! ✓');
+    loadDashboard();
   } else {
-    toast('Error al conectar','error');
+    toast('Error al conectar — verificá los datos','error');
   }
 }
 
@@ -1032,8 +1036,9 @@ async function loadDashboard() {
 }
 
 (function init() {
-  initSupabase();
-  if (sbClient) loadDashboard();
+  if (initSupabase()) {
+    loadDashboard();
+  }
 })();
 </script>
 </body>
