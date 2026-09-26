@@ -20,8 +20,8 @@
   --surface:   #14171f;
   --surface2:  #1c2030;
   --border:    #252a38;
-  --accent:    #c8a96e;      /* oro terroso */
-  --accent2:   #4f8ef7;      /* azul eléctrico */
+  --accent:    #c8a96e;
+  --accent2:   #4f8ef7;
   --danger:    #e05252;
   --warn:      #e09a3a;
   --ok:        #4caf7d;
@@ -42,7 +42,6 @@ body {
   overflow-x: hidden;
 }
 
-/* ── SIDEBAR ── */
 #sidebar {
   position: fixed; top: 0; left: 0;
   width: 240px; height: 100vh;
@@ -92,7 +91,6 @@ nav a svg { width: 17px; height: 17px; flex-shrink: 0; }
   font-size: .75rem; color: var(--muted);
 }
 
-/* ── MAIN ── */
 #main {
   margin-left: 240px;
   padding: 40px 44px;
@@ -101,7 +99,6 @@ nav a svg { width: 17px; height: 17px; flex-shrink: 0; }
 .page { display: none; }
 .page.active { display: block; }
 
-/* ── PAGE HEADER ── */
 .page-header { margin-bottom: 32px; }
 .page-header h2 {
   font-family: var(--font-head);
@@ -110,7 +107,6 @@ nav a svg { width: 17px; height: 17px; flex-shrink: 0; }
 }
 .page-header p { color: var(--muted); font-size: .9rem; margin-top: 4px; }
 
-/* ── CARDS / PANELS ── */
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -126,7 +122,6 @@ nav a svg { width: 17px; height: 17px; flex-shrink: 0; }
   display: flex; align-items: center; gap: 8px;
 }
 
-/* ── FORMS ── */
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -160,7 +155,6 @@ nav a svg { width: 17px; height: 17px; flex-shrink: 0; }
 .form-group textarea { resize: vertical; min-height: 70px; }
 .form-group select option { background: var(--surface2); }
 
-/* ── BUTTONS ── */
 .btn {
   display: inline-flex; align-items: center; gap: 7px;
   padding: 10px 22px;
@@ -191,7 +185,6 @@ nav a svg { width: 17px; height: 17px; flex-shrink: 0; }
 }
 .btn-danger:hover { background: rgba(224,82,82,.12); }
 
-/* ── TABLES ── */
 .table-wrap { overflow-x: auto; border-radius: var(--radius); }
 table {
   width: 100%; border-collapse: collapse;
@@ -214,7 +207,6 @@ tbody tr {
 tbody tr:hover { background: rgba(255,255,255,.03); }
 tbody td { padding: 11px 14px; }
 
-/* ── BADGES ── */
 .badge {
   display: inline-block;
   padding: 3px 10px;
@@ -229,7 +221,6 @@ tbody td { padding: 11px 14px; }
 .badge-muted   { background: rgba(122,128,153,.15); color: var(--muted); }
 .badge-gold    { background: rgba(200,169,110,.18); color: var(--accent); }
 
-/* ── STAT BOXES ── */
 .stats-row {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -256,7 +247,6 @@ tbody td { padding: 11px 14px; }
 }
 .stat-box .stat-sub { font-size: .77rem; color: var(--muted); margin-top: 4px; }
 
-/* ── REPORT CONTAINER (ADMIN) ── */
 .report-box {
   background: var(--surface2);
   border: 1px solid var(--border);
@@ -269,7 +259,6 @@ tbody td { padding: 11px 14px; }
   margin-top: 16px;
 }
 
-/* ── TOAST ── */
 #toast {
   position: fixed; bottom: 28px; right: 28px;
   background: var(--surface);
@@ -288,7 +277,6 @@ tbody td { padding: 11px 14px; }
 #toast.success { border-color: var(--ok); color: var(--ok); }
 #toast.error   { border-color: var(--danger); color: var(--danger); }
 
-/* ── SETUP BANNER ── */
 #setup-banner {
   background: rgba(224,154,58,.1);
   border: 1px solid var(--warn);
@@ -304,7 +292,6 @@ tbody td { padding: 11px 14px; }
 </head>
 <body>
 
-<!-- ══════════════════ SIDEBAR ══════════════════ -->
 <aside id="sidebar">
   <div class="logo">
     <h1>Alpe<br>Ingeniería</h1>
@@ -332,21 +319,19 @@ tbody td { padding: 11px 14px; }
       <span>Cierre para Admin</span>
     </a>
     <a href="#" data-page="config">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l-.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l.06-.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l-.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       <span>Configuración</span>
     </a>
   </nav>
   <div class="sidebar-footer">Alpe Ingeniería</div>
 </aside>
 
-<!-- ══════════════════ MAIN ══════════════════ -->
 <main id="main">
 
   <div id="setup-banner">
     ⚠️ <strong>Credenciales no configuradas.</strong> Ingresá a la sección Configuración para conectar Supabase.
   </div>
 
-  <!-- ── DASHBOARD ── -->
   <section class="page active" id="page-dashboard">
     <div class="page-header">
       <h2>Dashboard</h2>
@@ -377,7 +362,6 @@ tbody td { padding: 11px 14px; }
     </div>
   </section>
 
-  <!-- ── CLIENTES ── -->
   <section class="page" id="page-clientes">
     <div class="page-header">
       <h2>Directorio de Clientes</h2>
@@ -423,7 +407,6 @@ tbody td { padding: 11px 14px; }
     </div>
   </section>
 
-  <!-- ── CONTROL DE HORAS ── -->
   <section class="page" id="page-horas">
     <div class="page-header">
       <h2>Control de Horas y Cierre Mensual</h2>
@@ -517,7 +500,6 @@ tbody td { padding: 11px 14px; }
     </div>
   </section>
 
-  <!-- ── MOVIMIENTOS E INVERSIONES ── -->
   <section class="page" id="page-movimientos">
     <div class="page-header">
       <h2>Movimientos, Gastos e Inversiones</h2>
@@ -591,7 +573,6 @@ tbody td { padding: 11px 14px; }
     </div>
   </section>
 
-  <!-- ── CIERRE PARA ADMINISTRACIÓN ── -->
   <section class="page" id="page-cierre">
     <div class="page-header">
       <h2>Cierre de Mes para Administración</h2>
@@ -625,7 +606,6 @@ tbody td { padding: 11px 14px; }
     </div>
   </section>
 
-  <!-- ── CONFIGURACIÓN ── -->
   <section class="page" id="page-config">
     <div class="page-header">
       <h2>Configuración</h2>
@@ -652,7 +632,6 @@ tbody td { padding: 11px 14px; }
 
 <div id="toast"></div>
 
-<!-- ══════════════════ JAVASCRIPT ══════════════════ -->
 <script>
 let sbClient = null;
 
@@ -673,7 +652,6 @@ function initSupabase() {
   }
 }
 
-// Navegación
 const pages = { dashboard: 'page-dashboard', clientes: 'page-clientes', horas: 'page-horas', movimientos: 'page-movimientos', cierre: 'page-cierre', config: 'page-config' };
 document.querySelectorAll('nav a').forEach(a => {
   a.addEventListener('click', e => {
@@ -710,7 +688,6 @@ document.getElementById('cierre-mes-anio').value = currentYm;
 document.getElementById('h-fecha').value = today();
 document.getElementById('m-fecha').value = today();
 
-// ── CLIENTES ──
 async function guardarCliente() {
   if (!sbClient) return toast('Configurá Supabase en Configuración','error');
   const row = {
@@ -754,17 +731,16 @@ async function cargarSelectClientes() {
   if (!sbClient) return;
   const {data} = await sbClient.from('clientes_alpe').select('*').order('codigo', {ascending:true});
   const sel = document.getElementById('h-cliente-select');
-  sel.innerHTML = '<option value="">Seleccionar cliente...</option>' + (data||[]).map(c => `<option value="${c.nombre}">[${c.codigo}] ${c.nombre}</option>`).join('');
+  if(sel) sel.innerHTML = '<option value="">Seleccionar cliente...</option>' + (data||[]).map(c => `<option value="${c.nombre}">[${c.codigo}] ${c.nombre}</option>`).join('');
 }
 
 async function cargarSelectCierre() {
   if (!sbClient) return;
   const {data} = await sbClient.from('clientes_alpe').select('*').order('codigo', {ascending:true});
   const sel = document.getElementById('cierre-cliente-select');
-  sel.innerHTML = '<option value="">Seleccionar cliente...</option>' + (data||[]).map(c => `<option value="${c.nombre}">[${c.codigo}] ${c.nombre}</option>`).join('');
+  if(sel) sel.innerHTML = '<option value="">Seleccionar cliente...</option>' + (data||[]).map(c => `<option value="${c.nombre}">[${c.codigo}] ${c.nombre}</option>`).join('');
 }
 
-// ── HORAS ──
 async function guardarHora() {
   if (!sbClient) return toast('Configurá Supabase en Configuración','error');
   const row = {
@@ -801,12 +777,12 @@ async function cargarHoras() {
 function calcularResumenHoras() {
   const tb = document.getElementById('horas-body');
   if (!horasCache.length) {
-    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">Sin registros en este mes</td></tr>';
-    document.getElementById('res-total-hrs').textContent = '0 hrs';
-    document.getElementById('res-add-hrs').textContent = '0 hrs';
-    document.getElementById('res-add-usd').textContent = 'U$D 0.00';
-    document.getElementById('res-add-ars').textContent = '$ 0';
-    document.getElementById('dash-horas').textContent = '0 hrs';
+    if(tb) tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">Sin registros en este mes</td></tr>';
+    const el1 = document.getElementById('res-total-hrs'); if(el1) el1.textContent = '0 hrs';
+    const el2 = document.getElementById('res-add-hrs'); if(el2) el2.textContent = '0 hrs';
+    const el3 = document.getElementById('res-add-usd'); if(el3) el3.textContent = 'U$D 0.00';
+    const el4 = document.getElementById('res-add-ars'); if(el4) el4.textContent = '$ 0';
+    const el5 = document.getElementById('dash-horas'); if(el5) el5.textContent = '0 hrs';
     return;
   }
 
@@ -842,17 +818,17 @@ function calcularResumenHoras() {
     </tr>`;
   }).reverse();
 
-  tb.innerHTML = rowsHtml.join('');
+  if(tb) tb.innerHTML = rowsHtml.join('');
 
   const horasAdicionales = Math.max(0, totalMes - 20);
   const totalAdicionalUsd = horasAdicionales * tarifaUsd;
   const totalAdicionalArs = totalAdicionalUsd * dolarMep;
 
-  document.getElementById('res-total-hrs').textContent = totalMes.toFixed(1) + ' hrs';
-  document.getElementById('res-add-hrs').textContent = horasAdicionales.toFixed(1) + ' hrs';
-  document.getElementById('res-add-usd').textContent = 'U$D ' + totalAdicionalUsd.toLocaleString('es-AR', {minimumFractionDigits:2});
-  document.getElementById('res-add-ars').textContent = fmt$(totalAdicionalArs);
-  document.getElementById('dash-horas').textContent = totalMes.toFixed(1) + ' hrs';
+  const el1 = document.getElementById('res-total-hrs'); if(el1) el1.textContent = totalMes.toFixed(1) + ' hrs';
+  const el2 = document.getElementById('res-add-hrs'); if(el2) el2.textContent = horasAdicionales.toFixed(1) + ' hrs';
+  const el3 = document.getElementById('res-add-usd'); if(el3) el3.textContent = 'U$D ' + totalAdicionalUsd.toLocaleString('es-AR', {minimumFractionDigits:2});
+  const el4 = document.getElementById('res-add-ars'); if(el4) el4.textContent = fmt$(totalAdicionalArs);
+  const el5 = document.getElementById('dash-horas'); if(el5) el5.textContent = totalMes.toFixed(1) + ' hrs';
 }
 
 async function borrarHora(id) {
@@ -862,7 +838,6 @@ async function borrarHora(id) {
   cargarHoras();
 }
 
-// ── MOVIMIENTOS E INVERSIONES ──
 async function guardarMovimiento() {
   if (!sbClient) return toast('Configurá Supabase en Configuración','error');
   const row = {
@@ -914,7 +889,6 @@ async function borrarMov(id) {
   cargarMovimientos();
 }
 
-// ── CIERRE PARA ADMINISTRACIÓN ──
 async function generarReporteAdmin() {
   if (!sbClient) return toast('Configurá Supabase en Configuración','error');
   const cliente = document.getElementById('cierre-cliente-select').value;
@@ -990,10 +964,9 @@ function copiarReporteAdmin() {
   });
 }
 
-// ── CONFIG ──
 function cargarCamposConfig() {
-  document.getElementById('cfg-url').value = localStorage.getItem('sb_url')||'';
-  document.getElementById('cfg-key').value = localStorage.getItem('sb_key')||'';
+  const u = document.getElementById('cfg-url'); if(u) u.value = localStorage.getItem('sb_url')||'';
+  const k = document.getElementById('cfg-key'); if(k) k.value = localStorage.getItem('sb_key')||'';
 }
 
 function guardarConfig() {
@@ -1012,27 +985,33 @@ function guardarConfig() {
   }
 }
 
-// ── DASHBOARD ──
 async function loadDashboard() {
   if (!sbClient) return;
   const now = new Date();
   const desde = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
 
-  const {data: movs} = await sbClient.from('movimientos_alpe').select('*').gte('fecha', desde);
-  const ingresos = (movs||[]).filter(m => m.tipo==='Ingreso').reduce((s,m) => s+(m.monto_pesos||0),0);
-  const egresos  = (movs||[]).filter(m => m.tipo==='Egreso').reduce((s,m)  => s+(m.monto_pesos||0),0);
-  const inversiones = (movs||[]).filter(m => m.tipo==='Inversión').reduce((s,m) => s+(m.monto_pesos||0),0);
-  const balance  = ingresos - egresos - inversiones;
+  try {
+    const {data: movs} = await sbClient.from('movimientos_alpe').select('*').gte('fecha', desde);
+    const ingresos = (movs||[]).filter(m => m.tipo==='Ingreso').reduce((s,m) => s+(m.monto_pesos||0),0);
+    const egresos  = (movs||[]).filter(m => m.tipo==='Egreso').reduce((s,m)  => s+(m.monto_pesos||0),0);
+    const inversiones = (movs||[]).filter(m => m.tipo==='Inversión').reduce((s,m) => s+(m.monto_pesos||0),0);
+    const balance  = ingresos - egresos - inversiones;
 
-  document.getElementById('dash-ingresos').textContent = fmt$(ingresos);
-  document.getElementById('dash-egresos').textContent = fmt$(egresos);
-  document.getElementById('dash-inversiones').textContent = fmt$(inversiones);
-  document.getElementById('dash-balance').textContent = fmt$(balance);
-  document.getElementById('dash-balance').style.color = balance >= 0 ? 'var(--ok)' : 'var(--danger)';
-  
-  const {data: horas} = await sbClient.from('horas_alpe').select('horas');
-  const totalH = (horas||[]).reduce((s,h) => s+h.horas, 0);
-  document.getElementById('dash-horas').textContent = totalH.toFixed(1) + ' hrs';
+    const el1 = document.getElementById('dash-ingresos'); if(el1) el1.textContent = fmt$(ingresos);
+    const el2 = document.getElementById('dash-egresos'); if(el2) el2.textContent = fmt$(egresos);
+    const el3 = document.getElementById('dash-inversiones'); if(el3) el3.textContent = fmt$(inversiones);
+    const el4 = document.getElementById('dash-balance'); 
+    if(el4) {
+      el4.textContent = fmt$(balance);
+      el4.style.color = balance >= 0 ? 'var(--ok)' : 'var(--danger)';
+    }
+  } catch(e) { console.error(e); }
+
+  try {
+    const {data: horas} = await sbClient.from('horas_alpe').select('horas');
+    const totalH = (horas||[]).reduce((s,h) => s+h.horas, 0);
+    const el5 = document.getElementById('dash-horas'); if(el5) el5.textContent = totalH.toFixed(1) + ' hrs';
+  } catch(e) { console.error(e); }
 }
 
 (function init() {
