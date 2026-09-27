@@ -724,9 +724,11 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); }
       <div class="card-title">📄 Detalle Consolidado para Enviar a Administración</div>
       <p style="color:var(--muted); font-size:0.86rem; margin-bottom:12px;">Copiá este texto directamente para pasarlo por mail o WhatsApp:</p>
       <div class="report-box" id="cierre-texto-output"></div>
-      <div style="margin-top:16px;">
+      <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="enviarReporteMail()">✉️ Enviar por mail a Administración</button>
         <button class="btn btn-secondary" onclick="copiarReporteAdmin()">📋 Copiar texto al portapapeles</button>
       </div>
+      <p style="color:var(--muted); font-size:0.8rem; margin-top:10px;">Para: administracion@alpeingenieria.com.ar · CC: jpettinicchi@alpeingenieria.com.ar</p>
     </div>
   </section>
 
@@ -803,12 +805,12 @@ function toggleMenu(forzar) {
   document.getElementById('overlay').classList.toggle('show', abrir);
 }
 
-function toast(msg, type='success') {
+function toast(msg, type='success', ms=3500) {
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.className = 'show ' + type;
   clearTimeout(toast._t);
-  toast._t = setTimeout(() => el.className = '', 3500);
+  toast._t = setTimeout(() => el.className = '', ms);
 }
 
 // ── Utilidades de formato y fechas (hora local de Argentina, no UTC) ──
@@ -1100,6 +1102,40 @@ function copiarReporteAdmin() {
   navigator.clipboard.writeText(texto).then(() => {
     toast('¡Reporte copiado al portapapeles! ✓');
   });
+}
+
+// ── Envío por mail: copia el informe en Arial y abre un mail nuevo con Para, CC y Asunto ──
+const MAIL_PARA = 'administracion@alpeingenieria.com.ar';
+const MAIL_CC   = 'jpettinicchi@alpeingenieria.com.ar';
+
+async function enviarReporteMail() {
+  const texto = document.getElementById('cierre-texto-output').textContent;
+  if (!texto) return toast('Generá el reporte primero','error');
+
+  const cliente = document.getElementById('cierre-cliente-select').value;
+  const [a, m] = document.getElementById('cierre-mes-anio').value.split('-');
+  const asunto = `Liquidación ${MESES_LARGO[+m-1]} ${a} - ${cliente}`;
+
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:10pt;color:#000000;">${esc(texto).replace(/\n/g,'<br>')}</div>`;
+
+  let copiado = false;
+  try {
+    if (window.ClipboardItem) {
+      await navigator.clipboard.write([new ClipboardItem({
+        'text/html':  new Blob([html],  {type:'text/html'}),
+        'text/plain': new Blob([texto], {type:'text/plain'})
+      })]);
+    } else {
+      await navigator.clipboard.writeText(texto);
+    }
+    copiado = true;
+  } catch(e) { console.error(e); }
+
+  window.location.href = `mailto:${MAIL_PARA}?cc=${encodeURIComponent(MAIL_CC)}&subject=${encodeURIComponent(asunto)}`;
+
+  if (copiado) toast('Informe copiado en Arial ✓ Pegalo en el cuerpo del mail (Ctrl+V o mantener apretado → Pegar)', 'success', 7000);
+  else toast('No se pudo copiar el informe: usá "Copiar texto" y pegalo en el mail', 'error', 7000);
 }
 
 function cargarCamposConfig() {
