@@ -1132,10 +1132,29 @@ async function enviarReporteMail() {
     copiado = true;
   } catch(e) { console.error(e); }
 
-  window.location.href = `mailto:${MAIL_PARA}?cc=${encodeURIComponent(MAIL_CC)}&subject=${encodeURIComponent(asunto)}`;
+  const esCelular = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-  if (copiado) toast('Informe copiado en Arial ✓ Pegalo en el cuerpo del mail (Ctrl+V o mantener apretado → Pegar)', 'success', 7000);
-  else toast('No se pudo copiar el informe: usá "Copiar texto" y pegalo en el mail', 'error', 7000);
+  if (esCelular) {
+    // En el celular, mailto abre la app de mail predeterminada (Gmail en Android)
+    window.location.href = `mailto:${MAIL_PARA}?cc=${encodeURIComponent(MAIL_CC)}&subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(texto)}`;
+    toast('Revisá el mail y enviá. Si el cuerpo llegó cortado, borralo y pegá (mantener apretado → Pegar)', 'success', 8000);
+    return;
+  }
+
+  // En la PC: Gmail web con Para, CC, Asunto y el informe en el cuerpo
+  const base = 'https://mail.google.com/mail/?view=cm&fs=1'
+    + `&to=${encodeURIComponent(MAIL_PARA)}`
+    + `&cc=${encodeURIComponent(MAIL_CC)}`
+    + `&su=${encodeURIComponent(asunto)}`;
+  const conCuerpo = base + `&body=${encodeURIComponent(texto)}`;
+  const entra = conCuerpo.length < 7500; // informes muy largos: se pega a mano
+
+  const w = window.open(entra ? conCuerpo : base, '_blank');
+  if (!w) return toast('El navegador bloqueó la ventana: permití ventanas emergentes para este sitio', 'error', 8000);
+
+  if (entra) toast('Gmail abierto con el informe cargado ✓ Revisá y enviá', 'success', 6000);
+  else if (copiado) toast('Informe largo: pegalo en el cuerpo del mail con Ctrl+V (ya está copiado)', 'success', 8000);
+  else toast('Informe largo: usá "Copiar texto" y pegalo en el mail', 'error', 8000);
 }
 
 function cargarCamposConfig() {
