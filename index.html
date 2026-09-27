@@ -8,7 +8,7 @@
 <!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <!-- Google Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
 
@@ -27,6 +27,8 @@
   --ok:        #4caf7d;
   --text:      #e8e4dc;
   --muted:     #7a8099;
+  --ingreso:   #e8892b;
+  --egreso:    #6b7080;
   --font-head: 'DM Serif Display', serif;
   --font-body: 'DM Sans', sans-serif;
   --font-mono: 'DM Mono', monospace;
@@ -206,6 +208,7 @@ tbody tr {
 }
 tbody tr:hover { background: rgba(255,255,255,.03); }
 tbody td { padding: 11px 14px; }
+td.num, th.num { text-align: right; font-family: var(--font-mono); }
 
 .badge {
   display: inline-block;
@@ -233,6 +236,10 @@ tbody td { padding: 11px 14px; }
   border-radius: var(--radius);
   padding: 22px 20px;
 }
+.stat-box.destacado {
+  border-color: var(--accent);
+  background: linear-gradient(180deg, rgba(200,169,110,.08), var(--surface));
+}
 .stat-box .stat-label {
   font-size: .73rem;
   text-transform: uppercase;
@@ -246,6 +253,8 @@ tbody td { padding: 11px 14px; }
   font-weight: 500;
 }
 .stat-box .stat-sub { font-size: .77rem; color: var(--muted); margin-top: 4px; }
+
+.chart-wrap { position: relative; height: 320px; }
 
 .report-box {
   background: var(--surface2);
@@ -335,29 +344,64 @@ tbody td { padding: 11px 14px; }
   <section class="page active" id="page-dashboard">
     <div class="page-header">
       <h2>Dashboard</h2>
-      <p>Resumen mensual consolidado de Alpe Ingeniería</p>
+      <p id="dash-subtitulo">Resultado acumulado del negocio y detalle del mes en curso</p>
     </div>
 
     <div class="stats-row">
-      <div class="stat-box">
-        <div class="stat-label">Ingresos del Mes</div>
-        <div class="stat-value flujo-pos" id="dash-ingresos">$ —</div>
-        <div class="stat-sub">Alpe Ingeniería</div>
+      <div class="stat-box destacado">
+        <div class="stat-label">Acumulado del negocio</div>
+        <div class="stat-value" id="dash-acumulado">$ —</div>
+        <div class="stat-sub">Ingresos − egresos, todos los meses</div>
       </div>
       <div class="stat-box">
-        <div class="stat-label">Egresos & Viáticos</div>
-        <div class="stat-value flujo-neg" id="dash-egresos">$ —</div>
-        <div class="stat-sub">Corrientes</div>
+        <div class="stat-label">Ingresos del mes</div>
+        <div class="stat-value" style="color:var(--ingreso)" id="dash-ingresos">$ —</div>
+        <div class="stat-sub" id="dash-mes-label">—</div>
       </div>
       <div class="stat-box">
-        <div class="stat-label">Inversiones Mes</div>
+        <div class="stat-label">Egresos del mes</div>
+        <div class="stat-value" style="color:var(--muted)" id="dash-egresos">$ —</div>
+        <div class="stat-sub">Viáticos y gastos corrientes</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Resultado del mes</div>
+        <div class="stat-value" id="dash-balance">$ —</div>
+        <div class="stat-sub">Ingresos − egresos</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Inversiones del mes</div>
         <div class="stat-value" style="color:var(--accent)" id="dash-inversiones">$ —</div>
         <div class="stat-sub">Capacitaciones / Equipos</div>
       </div>
       <div class="stat-box">
-        <div class="stat-label">Horas Totales Mes</div>
+        <div class="stat-label">Horas del mes</div>
         <div class="stat-value" id="dash-horas">—</div>
-        <div class="stat-sub">Base (20h) + Adicionales</div>
+        <div class="stat-sub" id="dash-horas-sub">Base (20h) + Adicionales</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Ingresos y egresos por mes</div>
+      <div class="chart-wrap"><canvas id="chart-flujo"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Evolución mensual</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Mes</th>
+              <th class="num">Ingresos</th>
+              <th class="num">Egresos</th>
+              <th class="num">Resultado del mes</th>
+              <th class="num">Acumulado</th>
+            </tr>
+          </thead>
+          <tbody id="evolucion-body">
+            <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:28px">Sin movimientos registrados</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </section>
@@ -678,11 +722,19 @@ function toast(msg, type='success') {
   toast._t = setTimeout(() => el.className = '', 3500);
 }
 
-const fmt$= n => '$ ' + (n||0).toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
+// ── Utilidades de formato y fechas (hora local de Argentina, no UTC) ──
+const fmt$ = n => (n < 0 ? '−$ ' : '$ ') + Math.abs(n||0).toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
 const fmtD = d => d ? new Date(d+'T00:00:00').toLocaleDateString('es-AR') : '—';
-const today = () => new Date().toISOString().split('T')[0];
+const pad2 = n => String(n).padStart(2,'0');
+const ymLocal = (d = new Date()) => `${d.getFullYear()}-${pad2(d.getMonth()+1)}`;
+const today = () => { const d = new Date(); return `${ymLocal(d)}-${pad2(d.getDate())}`; };
+const lastDay = ym => { const [a,m] = ym.split('-').map(Number); return `${ym}-${pad2(new Date(a, m, 0).getDate())}`; };
+const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const MESES_LARGO = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const fmtYm = ym => { const [a,m] = ym.split('-'); return `${MESES[+m-1]} ${a}`; };
+const colorSigno = n => n >= 0 ? 'var(--ok)' : 'var(--danger)';
 
-const currentYm = new Date().toISOString().slice(0,7);
+const currentYm = ymLocal();
 document.getElementById('f-mes-anio').value = currentYm;
 document.getElementById('cierre-mes-anio').value = currentYm;
 document.getElementById('h-fecha').value = today();
@@ -762,9 +814,8 @@ let horasCache = [];
 async function cargarHoras() {
   if (!sbClient) return;
   const mesAnio = document.getElementById('f-mes-anio').value;
-  const [anio, mes] = mesAnio.split('-');
   const desde = `${mesAnio}-01`;
-  const hasta = new Date(anio, mes, 0).toISOString().split('T')[0];
+  const hasta = lastDay(mesAnio);
 
   const {data, error} = await sbClient.from('horas_alpe').select('*').gte('fecha', desde).lte('fecha', hasta).order('fecha', {ascending:false});
   const tb = document.getElementById('horas-body');
@@ -782,7 +833,6 @@ function calcularResumenHoras() {
     const el2 = document.getElementById('res-add-hrs'); if(el2) el2.textContent = '0 hrs';
     const el3 = document.getElementById('res-add-usd'); if(el3) el3.textContent = 'U$D 0.00';
     const el4 = document.getElementById('res-add-ars'); if(el4) el4.textContent = '$ 0';
-    const el5 = document.getElementById('dash-horas'); if(el5) el5.textContent = '0 hrs';
     return;
   }
 
@@ -791,14 +841,15 @@ function calcularResumenHoras() {
   const tarifaUsd = parseFloat(document.getElementById('f-tarifa-usd').value) || 50;
   const dolarMep = parseFloat(document.getElementById('f-dolar-mep').value) || 1535;
 
-  const sorted = [...horasCache].sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
+  const sorted = [...horasCache].sort((a,b) => (a.fecha.localeCompare(b.fecha)) || (a.id - b.id));
 
   const rowsHtml = sorted.map(r => {
-    totalMes += r.horas;
+    const h = Number(r.horas) || 0;
+    totalMes += h;
     let tipoBadge = '';
     if (acumulado < 20) {
       const resto = 20 - acumulado;
-      if (r.horas <= resto) {
+      if (h <= resto) {
         tipoBadge = '<span class="badge badge-ok">Base (Abono 20h)</span>';
       } else {
         tipoBadge = '<span class="badge badge-warn">Mixta (Base + Adic.)</span>';
@@ -806,12 +857,12 @@ function calcularResumenHoras() {
     } else {
       tipoBadge = '<span class="badge badge-blue">Adicional Profesional</span>';
     }
-    acumulado += r.horas;
+    acumulado += h;
 
     return `<tr>
       <td>${fmtD(r.fecha)}</td>
       <td><strong>${r.cliente}</strong></td>
-      <td><strong>${r.horas}</strong></td>
+      <td><strong>${h}</strong></td>
       <td>${tipoBadge}</td>
       <td style="color:var(--muted)">${r.detalle||'—'}</td>
       <td><button class="btn btn-danger" onclick="borrarHora(${r.id})">✕</button></td>
@@ -828,7 +879,6 @@ function calcularResumenHoras() {
   const el2 = document.getElementById('res-add-hrs'); if(el2) el2.textContent = horasAdicionales.toFixed(1) + ' hrs';
   const el3 = document.getElementById('res-add-usd'); if(el3) el3.textContent = 'U$D ' + totalAdicionalUsd.toLocaleString('es-AR', {minimumFractionDigits:2});
   const el4 = document.getElementById('res-add-ars'); if(el4) el4.textContent = fmt$(totalAdicionalArs);
-  const el5 = document.getElementById('dash-horas'); if(el5) el5.textContent = totalMes.toFixed(1) + ' hrs';
 }
 
 async function borrarHora(id) {
@@ -873,8 +923,8 @@ async function cargarMovimientos() {
       <td>${fmtD(r.fecha)}</td>
       <td><span class="badge ${tipoColor}">${r.tipo}</span></td>
       <td>${r.categoria}</td>
-      <td style="font-family:var(--font-mono)">${r.monto_pesos ? fmt$(r.monto_pesos) : '—'}</td>
-      <td style="font-family:var(--font-mono)">${r.monto_usd ? 'U$D '+r.monto_usd.toLocaleString('es-AR') : '—'}</td>
+      <td style="font-family:var(--font-mono)">${r.monto_pesos ? fmt$(Number(r.monto_pesos)) : '—'}</td>
+      <td style="font-family:var(--font-mono)">${r.monto_usd ? 'U$D '+Number(r.monto_usd).toLocaleString('es-AR') : '—'}</td>
       <td>${r.estado}</td>
       <td style="color:var(--muted)">${r.descripcion||'—'}</td>
       <td><button class="btn btn-danger" onclick="borrarMov(${r.id})">✕</button></td>
@@ -895,14 +945,13 @@ async function generarReporteAdmin() {
   const mesAnio = document.getElementById('cierre-mes-anio').value;
   if (!cliente || !mesAnio) return toast('Seleccioná cliente y mes','error');
 
-  const [anio, mes] = mesAnio.split('-');
   const desde = `${mesAnio}-01`;
-  const hasta = new Date(anio, mes, 0).toISOString().split('T')[0];
+  const hasta = lastDay(mesAnio);
 
   const {data: horas} = await sbClient.from('horas_alpe').select('*').eq('cliente', cliente).gte('fecha', desde).lte('fecha', hasta).order('fecha', {ascending:true});
   const {data: movs} = await sbClient.from('movimientos_alpe').select('*').gte('fecha', desde).lte('fecha', hasta);
 
-  let totalHoras = (horas||[]).reduce((s,h) => s + h.horas, 0);
+  let totalHoras = (horas||[]).reduce((s,h) => s + (Number(h.horas)||0), 0);
   let horasAdicionales = Math.max(0, totalHoras - 20);
   const tarifaUsd = 50;
   const dolarMep = 1535;
@@ -910,7 +959,7 @@ async function generarReporteAdmin() {
   const totalAdicionalArs = totalAdicionalUsd * dolarMep;
 
   let gastosViaticos = (movs||[]).filter(m => m.tipo === 'Egreso');
-  let totalGastosArs = gastosViaticos.reduce((s,m) => s + (m.monto_pesos||0), 0);
+  let totalGastosArs = gastosViaticos.reduce((s,m) => s + (Number(m.monto_pesos)||0), 0);
 
   let texto = `RENDICIÓN DE SERVICIOS Y VIÁTICOS - ${mesAnio.toUpperCase()}
 Cliente: ${cliente}
@@ -925,7 +974,7 @@ Subtotal Servicios: USD ${(1500 + totalAdicionalUsd).toFixed(2)} ($ ${( (1500 * 
 
   if (gastosViaticos.length > 0) {
     gastosViaticos.forEach(g => {
-      texto += `- ${fmtD(g.fecha)} | ${g.descripcion || g.categoria}: $ ${(g.monto_pesos||0).toLocaleString('es-AR')} ARS\n`;
+      texto += `- ${fmtD(g.fecha)} | ${g.descripcion || g.categoria}: $ ${(Number(g.monto_pesos)||0).toLocaleString('es-AR')} ARS\n`;
     });
   } else {
     texto += `- Sin viáticos registrados en este período\n`;
@@ -970,7 +1019,9 @@ function cargarCamposConfig() {
 }
 
 function guardarConfig() {
-  const url = document.getElementById('cfg-url').value.trim();
+  // Limpia la URL: quita /rest/v1 y barras finales para evitar rutas duplicadas
+  const url = document.getElementById('cfg-url').value.trim()
+    .replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
   const key = document.getElementById('cfg-key').value.trim();
   if (!url || !key || !url.startsWith('https://')) {
     return toast('Ingresá una URL válida (debe empezar con https://)','error');
@@ -985,32 +1036,115 @@ function guardarConfig() {
   }
 }
 
+// ── DASHBOARD: acumulado mes a mes + gráfico ──
+let chartFlujo = null;
+
 async function loadDashboard() {
   if (!sbClient) return;
-  const now = new Date();
-  const desde = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+  const ymHoy = ymLocal();
+  const [anioHoy, mesHoy] = ymHoy.split('-').map(Number);
+  document.getElementById('dash-mes-label').textContent = `${MESES_LARGO[mesHoy-1]} ${anioHoy}`;
 
-  try {
-    const {data: movs} = await sbClient.from('movimientos_alpe').select('*').gte('fecha', desde);
-    const ingresos = (movs||[]).filter(m => m.tipo==='Ingreso').reduce((s,m) => s+(m.monto_pesos||0),0);
-    const egresos  = (movs||[]).filter(m => m.tipo==='Egreso').reduce((s,m)  => s+(m.monto_pesos||0),0);
-    const inversiones = (movs||[]).filter(m => m.tipo==='Inversión').reduce((s,m) => s+(m.monto_pesos||0),0);
-    const balance  = ingresos - egresos - inversiones;
+  // 1) Movimientos de todos los meses, agrupados por mes
+  const {data: movs, error} = await sbClient.from('movimientos_alpe').select('fecha,tipo,monto_pesos').order('fecha', {ascending:true});
+  if (error) { toast('Error: '+error.message,'error'); return; }
 
-    const el1 = document.getElementById('dash-ingresos'); if(el1) el1.textContent = fmt$(ingresos);
-    const el2 = document.getElementById('dash-egresos'); if(el2) el2.textContent = fmt$(egresos);
-    const el3 = document.getElementById('dash-inversiones'); if(el3) el3.textContent = fmt$(inversiones);
-    const el4 = document.getElementById('dash-balance'); 
-    if(el4) {
-      el4.textContent = fmt$(balance);
-      el4.style.color = balance >= 0 ? 'var(--ok)' : 'var(--danger)';
+  const porMes = {};
+  (movs||[]).forEach(m => {
+    const k = m.fecha.slice(0,7);
+    if (!porMes[k]) porMes[k] = {ing:0, egr:0, inv:0};
+    const v = Number(m.monto_pesos) || 0;
+    if (m.tipo === 'Ingreso') porMes[k].ing += v;
+    else if (m.tipo === 'Egreso') porMes[k].egr += v;
+    else if (m.tipo === 'Inversión') porMes[k].inv += v;
+  });
+
+  // 2) Rango continuo de meses (sin huecos) desde el primero hasta el mes actual
+  const keys = Object.keys(porMes).sort();
+  const meses = [];
+  if (keys.length) {
+    const fin = keys[keys.length-1] > ymHoy ? keys[keys.length-1] : ymHoy;
+    let [a, m] = keys[0].split('-').map(Number);
+    while (true) {
+      const k = `${a}-${pad2(m)}`;
+      meses.push(k);
+      if (k >= fin) break;
+      m++; if (m > 12) { m = 1; a++; }
     }
-  } catch(e) { console.error(e); }
+  }
 
+  // 3) Resultado mensual y acumulado (ingresos − egresos, arrastrando saldo)
+  let acum = 0;
+  const filas = meses.map(k => {
+    const r = porMes[k] || {ing:0, egr:0, inv:0};
+    const res = r.ing - r.egr;
+    acum += res;
+    return {k, ...r, res, acum};
+  });
+
+  const filaHoy = filas.find(f => f.k === ymHoy);
+  const actual = filaHoy || {ing:0, egr:0, inv:0, res:0};
+  const acumHoy = filaHoy ? filaHoy.acum : (filas.length ? filas[filas.length-1].acum : 0);
+
+  const set = (id, txt, color) => { const el = document.getElementById(id); if (!el) return; el.textContent = txt; if (color) el.style.color = color; };
+  set('dash-acumulado', fmt$(acumHoy), colorSigno(acumHoy));
+  set('dash-ingresos', fmt$(actual.ing));
+  set('dash-egresos', fmt$(actual.egr));
+  set('dash-balance', fmt$(actual.res), colorSigno(actual.res));
+  set('dash-inversiones', fmt$(actual.inv));
+
+  // 4) Tabla de evolución (más reciente arriba)
+  const tb = document.getElementById('evolucion-body');
+  if (!filas.length) {
+    tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:28px">Sin movimientos registrados</td></tr>';
+  } else {
+    tb.innerHTML = [...filas].reverse().map(f => `<tr>
+      <td><strong>${fmtYm(f.k)}</strong></td>
+      <td class="num" style="color:var(--ingreso)">${fmt$(f.ing)}</td>
+      <td class="num" style="color:var(--muted)">${fmt$(f.egr)}</td>
+      <td class="num" style="color:${colorSigno(f.res)}">${fmt$(f.res)}</td>
+      <td class="num" style="color:${colorSigno(f.acum)}"><strong>${fmt$(f.acum)}</strong></td>
+    </tr>`).join('');
+  }
+
+  // 5) Gráfico de barras: ingresos (naranja) vs egresos (gris)
+  const ctx = document.getElementById('chart-flujo');
+  if (chartFlujo) chartFlujo.destroy();
+  chartFlujo = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: filas.map(f => fmtYm(f.k)),
+      datasets: [
+        { label: 'Ingresos', data: filas.map(f => f.ing), backgroundColor: '#e8892b', borderRadius: 4, maxBarThickness: 56 },
+        { label: 'Egresos',  data: filas.map(f => f.egr), backgroundColor: '#6b7080', borderRadius: 4, maxBarThickness: 56 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#e8e4dc', font: { family: 'DM Sans' } } },
+        tooltip: { callbacks: { label: c => `${c.dataset.label}: ${fmt$(c.parsed.y)}` } }
+      },
+      scales: {
+        x: { ticks: { color: '#7a8099' }, grid: { display: false } },
+        y: {
+          beginAtZero: true,
+          ticks: { color: '#7a8099', callback: v => '$ ' + (v/1e6).toLocaleString('es-AR', {maximumFractionDigits:1}) + ' M' },
+          grid: { color: '#252a38' }
+        }
+      }
+    }
+  });
+
+  // 6) Horas del mes en curso (antes sumaba todos los meses)
   try {
-    const {data: horas} = await sbClient.from('horas_alpe').select('horas');
-    const totalH = (horas||[]).reduce((s,h) => s+h.horas, 0);
-    const el5 = document.getElementById('dash-horas'); if(el5) el5.textContent = totalH.toFixed(1) + ' hrs';
+    const {data: horas} = await sbClient.from('horas_alpe').select('horas')
+      .gte('fecha', `${ymHoy}-01`).lte('fecha', lastDay(ymHoy));
+    const totalH = (horas||[]).reduce((s,h) => s + (Number(h.horas)||0), 0);
+    const adic = Math.max(0, totalH - 20);
+    set('dash-horas', totalH.toLocaleString('es-AR', {maximumFractionDigits:1}) + ' hrs');
+    set('dash-horas-sub', `${Math.min(totalH,20).toLocaleString('es-AR')} base + ${adic.toLocaleString('es-AR')} adicionales`);
   } catch(e) { console.error(e); }
 }
 
