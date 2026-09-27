@@ -297,9 +297,89 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); }
   display: none;
 }
 #setup-banner.show { display: block; }
+
+/* ── Barra superior y menú lateral en celular ── */
+#topbar { display: none; }
+#overlay { display: none; }
+
+@media (max-width: 820px) {
+  #topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    position: fixed; top: 0; left: 0; right: 0;
+    height: calc(56px + env(safe-area-inset-top, 0px));
+    padding: env(safe-area-inset-top, 0px) 16px 0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    z-index: 90;
+  }
+  #topbar .tb-logo {
+    font-family: var(--font-head);
+    color: var(--accent);
+    font-size: 1.1rem;
+  }
+  #topbar button {
+    background: none; border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text); width: 42px; height: 38px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  #topbar button svg { width: 20px; height: 20px; }
+
+  #sidebar {
+    transform: translateX(-100%);
+    transition: transform .25s ease;
+    width: 260px;
+    padding-top: calc(28px + env(safe-area-inset-top, 0px));
+  }
+  #sidebar.open { transform: translateX(0); box-shadow: var(--shadow); }
+  #overlay.show {
+    display: block; position: fixed; inset: 0;
+    background: rgba(0,0,0,.55); z-index: 95;
+  }
+  #sidebar { z-index: 100; }
+
+  #main {
+    margin-left: 0;
+    padding: calc(72px + env(safe-area-inset-top, 0px)) 14px calc(28px + env(safe-area-inset-bottom, 0px));
+  }
+  .page-header { margin-bottom: 20px; }
+  .page-header h2 { font-size: 1.55rem; }
+  .page-header p { font-size: .84rem; }
+
+  .card { padding: 18px 16px; margin-bottom: 18px; }
+  .card-title { font-size: 1rem; margin-bottom: 14px; }
+
+  .stats-row { grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+  .stat-box { padding: 14px 12px; }
+  .stat-box.destacado, .stat-box:last-child { grid-column: 1 / -1; }
+  .stat-box .stat-value { font-size: 1.05rem; word-break: break-word; }
+  .stat-box.destacado .stat-value { font-size: 1.5rem; }
+  .stat-box .stat-label { font-size: .66rem; letter-spacing: .06em; }
+  .stat-box .stat-sub { font-size: .7rem; }
+
+  .form-grid { grid-template-columns: 1fr !important; gap: 12px; }
+  /* 16px evita el zoom automático de iPhone al tocar un campo */
+  .form-group input, .form-group select, .form-group textarea { font-size: 16px; }
+  .btn-primary, .btn-secondary { width: 100%; justify-content: center; padding: 13px 22px; }
+
+  .chart-wrap { height: 240px; }
+  table { font-size: .8rem; }
+  thead th { padding: 10px 10px; font-size: .66rem; white-space: nowrap; }
+  tbody td { padding: 10px 10px; }
+  .report-box { font-size: .75rem; padding: 14px; }
+
+  #toast { left: 14px; right: 14px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-width: none; }
+}
 </style>
 </head>
 <body>
+
+<header id="topbar">
+  <span class="tb-logo">Alpe Ingeniería</span>
+  <button id="menu-btn" aria-label="Abrir menú" onclick="toggleMenu()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+</header>
+<div id="overlay" onclick="toggleMenu(false)"></div>
 
 <aside id="sidebar">
   <div class="logo">
@@ -711,8 +791,17 @@ document.querySelectorAll('nav a').forEach(a => {
     if (p === 'movimientos') cargarMovimientos();
     if (p === 'cierre') cargarSelectCierre();
     if (p === 'config') cargarCamposConfig();
+    toggleMenu(false);
+    window.scrollTo(0, 0);
   });
 });
+
+function toggleMenu(forzar) {
+  const sb = document.getElementById('sidebar');
+  const abrir = typeof forzar === 'boolean' ? forzar : !sb.classList.contains('open');
+  sb.classList.toggle('open', abrir);
+  document.getElementById('overlay').classList.toggle('show', abrir);
+}
 
 function toast(msg, type='success') {
   const el = document.getElementById('toast');
