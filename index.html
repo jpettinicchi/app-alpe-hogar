@@ -1540,4 +1540,16 @@ async function loadDashboard() {
         ? `Valor hora: ${fmtU(c.parsed.y, 1)}/h (honorarios ${fmtU(conHoras[c.dataIndex].honUsd)})`
         : `Horas: ${c.parsed.y.toLocaleString('es-AR')}` } } },
       scales: { x: ejeX,
-        yValor: { position: 'left', beginAtZero: true, title: { display: true, text: 'USD por hora', color: '#7a8099' }, ticks: { color: '#e8892b' }, grid: { color: '#252a38' } }
+        yValor: { position: 'left', beginAtZero: true, title: { display: true, text: 'USD por hora', color: '#7a8099' }, ticks: { color: '#e8892b' }, grid: { color: '#252a38' } },
+        yHoras: { position: 'right', beginAtZero: true, title: { display: true, text: 'Horas', color: '#7a8099' }, ticks: { color: '#7a8099' }, grid: { display: false } } } }
+  });
+}
+
+(function init() {
+  if (initSupabase()) {
+    loadDashboard();
+  }
+})();
+</script>
+</body>
+</html>
