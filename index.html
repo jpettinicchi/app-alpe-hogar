@@ -483,7 +483,7 @@ tr.fila-proy td { opacity: .7; font-style: italic; }
     <div class="card">
       <div class="card-title">Ingresos en USD por mes</div>
       <div class="chart-wrap"><canvas id="chart-usd"></canvas></div>
-      <p class="chart-nota">Se usa el monto en USD si el movimiento lo tiene; si no, el monto en pesos dividido el dólar de cierre de ese mes.</p>
+      <p class="chart-nota">Sin reintegros de viáticos. Se usa el monto en USD si el movimiento lo tiene; si no, el monto en pesos dividido el dólar de cierre de ese mes.</p>
     </div>
 
     <div class="card">
@@ -691,6 +691,7 @@ tr.fila-proy td { opacity: .7; font-style: italic; }
           <label>Categoría</label>
           <select id="m-categoria">
             <option value="Honorarios">Honorarios</option>
+            <option value="Reintegro de viáticos">Reintegro de viáticos</option>
             <option value="Viáticos / Vuelos / Uber">Viáticos / Vuelos / Uber</option>
             <option value="Inversión - Capacitación">Inversión - Capacitación</option>
             <option value="Inversión - Computadora / Dispositivo">Inversión - Computadora / Dispositivo</option>
@@ -1394,7 +1395,7 @@ async function loadDashboard() {
   document.getElementById('dash-mes-label').textContent = `${MESES_LARGO[mesHoy-1]} ${anioHoy}`;
 
   const [rMov, rPar, rHor] = await Promise.all([
-    sbClient.from('movimientos_alpe').select('fecha,tipo,monto_pesos,monto_usd').order('fecha', {ascending:true}),
+    sbClient.from('movimientos_alpe').select('fecha,tipo,categoria,monto_pesos,monto_usd').order('fecha', {ascending:true}),
     sbClient.from('parametros_mes_alpe').select('*').order('mes', {ascending:true}),
     sbClient.from('horas_alpe').select('fecha,horas')
   ]);
@@ -1419,6 +1420,8 @@ async function loadDashboard() {
     if (!v && u > 0 && tcMes > 0) v = u * tcMes;   // movimiento solo en USD: se pasa a pesos al dólar del mes
     if (m.tipo === 'Ingreso') {
       r.ing += v;
+      // Los reintegros de viáticos devuelven gastos: suman al acumulado en pesos, no a los ingresos en USD
+      if (m.categoria === 'Reintegro de viáticos') return;
       if (u > 0) r.ingUsd += u;
       else if (v > 0) { if (tcMes > 0) r.ingUsd += v / tcMes; else r.sinTc = true; }
     }
@@ -1537,16 +1540,4 @@ async function loadDashboard() {
         ? `Valor hora: ${fmtU(c.parsed.y, 1)}/h (honorarios ${fmtU(conHoras[c.dataIndex].honUsd)})`
         : `Horas: ${c.parsed.y.toLocaleString('es-AR')}` } } },
       scales: { x: ejeX,
-        yValor: { position: 'left', beginAtZero: true, title: { display: true, text: 'USD por hora', color: '#7a8099' }, ticks: { color: '#e8892b' }, grid: { color: '#252a38' } },
-        yHoras: { position: 'right', beginAtZero: true, title: { display: true, text: 'Horas', color: '#7a8099' }, ticks: { color: '#7a8099' }, grid: { display: false } } } }
-  });
-}
-
-(function init() {
-  if (initSupabase()) {
-    loadDashboard();
-  }
-})();
-</script>
-</body>
-</html>
+        yValor: { position: 'left', beginAtZero: true, title: { display: true, text: 'USD por hora', color: '#7a8099' }, ticks: { color: '#e8892b' }, grid: { color: '#252a38' } }
