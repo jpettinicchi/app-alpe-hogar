@@ -297,6 +297,10 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); }
   display: none;
 }
 #setup-banner.show { display: block; }
+.chart-nota { font-size: .76rem; color: var(--muted); margin-top: 10px; }
+.cuotas-preview { font-size: .82rem; color: var(--muted); min-height: 1em; }
+.cuotas-preview strong { color: var(--accent); }
+tr.fila-proy td { opacity: .7; font-style: italic; }
 
 /* ── Barra superior y menú lateral en celular ── */
 #topbar { display: none; }
@@ -439,6 +443,11 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); }
         <div class="stat-sub" id="dash-mes-label">—</div>
       </div>
       <div class="stat-box">
+        <div class="stat-label">Ingresos del mes (USD)</div>
+        <div class="stat-value" style="color:var(--ingreso)" id="dash-ingresos-usd">U$D —</div>
+        <div class="stat-sub" id="dash-dolar-sub">Al dólar de cierre del mes</div>
+      </div>
+      <div class="stat-box">
         <div class="stat-label">Egresos del mes</div>
         <div class="stat-value" style="color:var(--muted)" id="dash-egresos">$ —</div>
         <div class="stat-sub">Viáticos y gastos corrientes</div>
@@ -454,6 +463,11 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); }
         <div class="stat-sub">Capacitaciones / Equipos</div>
       </div>
       <div class="stat-box">
+        <div class="stat-label">Valor de tu hora (mes)</div>
+        <div class="stat-value" id="dash-valor-hora">U$D —</div>
+        <div class="stat-sub">Honorarios del mes ÷ horas trabajadas</div>
+      </div>
+      <div class="stat-box">
         <div class="stat-label">Horas del mes</div>
         <div class="stat-value" id="dash-horas">—</div>
         <div class="stat-sub" id="dash-horas-sub">Base (20h) + Adicionales</div>
@@ -463,6 +477,19 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); }
     <div class="card">
       <div class="card-title">Ingresos y egresos por mes</div>
       <div class="chart-wrap"><canvas id="chart-flujo"></canvas></div>
+      <p class="chart-nota">Los meses marcados "(proy.)" son futuros: muestran cuotas e ingresos fijos ya cargados.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Ingresos en USD por mes</div>
+      <div class="chart-wrap"><canvas id="chart-usd"></canvas></div>
+      <p class="chart-nota">Se usa el monto en USD si el movimiento lo tiene; si no, el monto en pesos dividido el dólar de cierre de ese mes.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Valor de tu hora vs. horas trabajadas</div>
+      <div class="chart-wrap"><canvas id="chart-hora"></canvas></div>
+      <p class="chart-nota">Valor hora = (abono + horas adicionales × tarifa) ÷ horas trabajadas en el mes, según los parámetros de cada mes. Viáticos no incluidos.</p>
     </div>
 
     <div class="card">
@@ -472,14 +499,17 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); }
           <thead>
             <tr>
               <th>Mes</th>
-              <th class="num">Ingresos</th>
-              <th class="num">Egresos</th>
+              <th class="num">Dólar</th>
+              <th class="num">Ingresos $</th>
+              <th class="num">Ingresos USD</th>
+              <th class="num">Egresos $</th>
+              <th class="num">Inversiones $</th>
               <th class="num">Resultado del mes</th>
               <th class="num">Acumulado</th>
             </tr>
           </thead>
           <tbody id="evolucion-body">
-            <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:28px">Sin movimientos registrados</td></tr>
+            <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:28px">Sin movimientos registrados</td></tr>
           </tbody>
         </table>
       </div>
@@ -538,20 +568,32 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); }
     </div>
 
     <div class="card">
-      <div class="card-title">⚙️ Parámetros del Mes (Tarifa & Dólar MEP)</div>
+      <div class="card-title">⚙️ Parámetros del Mes (Dólar de cierre, abono y tarifa)</div>
       <div class="form-grid">
         <div class="form-group">
           <label>Mes y Año</label>
           <input type="month" id="f-mes-anio" onchange="cargarHoras()" />
         </div>
         <div class="form-group">
-          <label>Tarifa Hora Adicional (USD)</label>
-          <input type="number" id="f-tarifa-usd" value="50" step="1" onchange="calcularResumenHoras()" />
+          <label>Dólar MEP de cierre ($)</label>
+          <input type="number" id="f-dolar-mep" step="0.01" placeholder="Cargar antes del cierre" oninput="calcularResumenHoras()" />
         </div>
         <div class="form-group">
-          <label>Dólar MEP de Cierre ($)</label>
-          <input type="number" id="f-dolar-mep" value="1535" step="1" onchange="calcularResumenHoras()" />
+          <label>Abono mensual (USD)</label>
+          <input type="number" id="f-abono-usd" value="1500" step="1" oninput="calcularResumenHoras()" />
         </div>
+        <div class="form-group">
+          <label>Horas incluidas en abono</label>
+          <input type="number" id="f-horas-abono" value="20" step="0.5" oninput="calcularResumenHoras()" />
+        </div>
+        <div class="form-group">
+          <label>Tarifa hora adicional (USD)</label>
+          <input type="number" id="f-tarifa-usd" value="50" step="1" oninput="calcularResumenHoras()" />
+        </div>
+      </div>
+      <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="guardarParametrosMes()">Guardar parámetros del mes</button>
+        <span id="param-estado" class="badge badge-muted">—</span>
       </div>
     </div>
 
@@ -588,7 +630,7 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); }
           <span id="res-total-hrs" style="font-size:1.3rem; color:var(--text)">0 hrs</span>
         </div>
         <div>
-          <span style="font-size:0.75rem; color:var(--muted); display:block">DEDICACIÓN ADICIONAL (>20h)</span>
+          <span style="font-size:0.75rem; color:var(--muted); display:block">DEDICACIÓN ADICIONAL (&gt;<span id="res-add-label">20</span>h)</span>
           <span id="res-add-hrs" style="font-size:1.3rem; color:var(--accent)">0 hrs</span>
         </div>
         <div>
@@ -635,7 +677,7 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); }
       <div class="form-grid">
         <div class="form-group">
           <label>Fecha</label>
-          <input type="date" id="m-fecha" />
+          <input type="date" id="m-fecha" oninput="previewCuotas()" />
         </div>
         <div class="form-group">
           <label>Tipo</label>
@@ -657,11 +699,11 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); }
         </div>
         <div class="form-group">
           <label>Monto en Pesos ($)</label>
-          <input type="number" id="m-pesos" min="0" step="0.01" placeholder="0.00" />
+          <input type="number" id="m-pesos" min="0" step="0.01" placeholder="0.00" oninput="previewCuotas()" />
         </div>
         <div class="form-group">
           <label>Monto en USD ($)</label>
-          <input type="number" id="m-usd" min="0" step="0.01" placeholder="0.00" />
+          <input type="number" id="m-usd" min="0" step="0.01" placeholder="0.00" oninput="previewCuotas()" />
         </div>
         <div class="form-group">
           <label>Estado</label>
@@ -670,6 +712,20 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); }
             <option value="Facturado">Facturado</option>
             <option value="Pagado">Pagado</option>
           </select>
+        </div>
+        <div class="form-group">
+          <label>Cuotas / meses</label>
+          <input type="number" id="m-cuotas" min="1" max="60" step="1" value="1" oninput="previewCuotas()" />
+        </div>
+        <div class="form-group">
+          <label>El monto ingresado es</label>
+          <select id="m-modo" onchange="previewCuotas()">
+            <option value="total">Total, a repartir en las cuotas</option>
+            <option value="cuota">Por cuota (se repite cada mes)</option>
+          </select>
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1">
+          <div id="m-cuotas-preview" class="cuotas-preview"></div>
         </div>
         <div class="form-group" style="grid-column: 1 / -1">
           <label>Descripción</label>
@@ -714,7 +770,11 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); }
         </div>
         <div class="form-group">
           <label>Mes a Liquidar</label>
-          <input type="month" id="cierre-mes-anio" />
+          <input type="month" id="cierre-mes-anio" onchange="cargarParamsCierre()" />
+        </div>
+        <div class="form-group">
+          <label>Dólar MEP de cierre ($)</label>
+          <input type="number" id="cierre-dolar" step="0.01" placeholder="Obligatorio" />
         </div>
       </div>
       <button class="btn btn-primary" onclick="generarReporteAdmin()">Generar reporte listo para enviar</button>
@@ -790,8 +850,8 @@ document.querySelectorAll('nav a').forEach(a => {
     if (p === 'dashboard') loadDashboard();
     if (p === 'clientes') cargarClientes();
     if (p === 'horas') { cargarSelectClientes(); cargarHoras(); }
-    if (p === 'movimientos') cargarMovimientos();
-    if (p === 'cierre') cargarSelectCierre();
+    if (p === 'movimientos') { cargarMovimientos(); previewCuotas(); }
+    if (p === 'cierre') { cargarSelectCierre(); cargarParamsCierre(); }
     if (p === 'config') cargarCamposConfig();
     toggleMenu(false);
     window.scrollTo(0, 0);
@@ -900,56 +960,113 @@ async function guardarHora() {
   cargarHoras();
 }
 
+// ── Parámetros por mes (dólar de cierre, abono, horas incluidas, tarifa) ──
+const PARAM_DEF = { abono_usd: 1500, horas_abono: 20, tarifa_usd: 50 };
+const fmtU = (n, dec=0) => 'U$D ' + (n||0).toLocaleString('es-AR', {minimumFractionDigits:dec, maximumFractionDigits:dec});
+const numVal = id => parseFloat(document.getElementById(id).value);
+
+async function getParametros(ym) {
+  const {data, error} = await sbClient.from('parametros_mes_alpe').select('*').eq('mes', ym).maybeSingle();
+  if (error) { console.error(error); return null; }
+  return data;
+}
+// Abono/horas/tarifa vigentes: los del mes, o los del último mes anterior cargado, o los por defecto
+async function getParametrosVigentes(ym) {
+  const propio = await getParametros(ym);
+  if (propio) return propio;
+  const {data} = await sbClient.from('parametros_mes_alpe').select('*').lt('mes', ym).order('mes', {ascending:false}).limit(1);
+  const prev = data?.[0];
+  return { mes: ym, dolar_mep: null,
+    abono_usd: prev ? Number(prev.abono_usd) : PARAM_DEF.abono_usd,
+    horas_abono: prev ? Number(prev.horas_abono) : PARAM_DEF.horas_abono,
+    tarifa_usd: prev ? Number(prev.tarifa_usd) : PARAM_DEF.tarifa_usd };
+}
+async function upsertParametros(row) {
+  return sbClient.from('parametros_mes_alpe')
+    .upsert({ ...row, updated_at: new Date().toISOString() }, { onConflict: 'mes' })
+    .select().single();
+}
+
 let horasCache = [];
+let paramsGuardados = null; // fila guardada del mes en pantalla (null si no hay)
 
 async function cargarHoras() {
   if (!sbClient) return;
-  const mesAnio = document.getElementById('f-mes-anio').value;
-  const desde = `${mesAnio}-01`;
-  const hasta = lastDay(mesAnio);
+  const ym = document.getElementById('f-mes-anio').value;
+  if (!ym) return;
 
-  const {data, error} = await sbClient.from('horas_alpe').select('*').gte('fecha', desde).lte('fecha', hasta).order('fecha', {ascending:false});
+  const p = await getParametrosVigentes(ym);
+  paramsGuardados = p.dolar_mep ? p : null;
+  document.getElementById('f-dolar-mep').value   = p.dolar_mep ?? '';
+  document.getElementById('f-abono-usd').value   = p.abono_usd;
+  document.getElementById('f-horas-abono').value = p.horas_abono;
+  document.getElementById('f-tarifa-usd').value  = p.tarifa_usd;
+
+  const {data, error} = await sbClient.from('horas_alpe').select('*')
+    .gte('fecha', `${ym}-01`).lte('fecha', lastDay(ym)).order('fecha', {ascending:false});
   const tb = document.getElementById('horas-body');
   if (error) { tb.innerHTML = `<tr><td colspan="6" style="color:var(--danger);text-align:center">${error.message}</td></tr>`; return; }
-  
   horasCache = data || [];
+  calcularResumenHoras();
+}
+
+function actualizarEstadoParametros() {
+  const el = document.getElementById('param-estado');
+  const dolar = numVal('f-dolar-mep');
+  if (!paramsGuardados) {
+    el.className = 'badge badge-warn';
+    el.textContent = 'Sin dólar de cierre guardado para este mes';
+    return;
+  }
+  const igual = Number(paramsGuardados.dolar_mep) === dolar &&
+    Number(paramsGuardados.abono_usd) === numVal('f-abono-usd') &&
+    Number(paramsGuardados.horas_abono) === numVal('f-horas-abono') &&
+    Number(paramsGuardados.tarifa_usd) === numVal('f-tarifa-usd');
+  if (igual) {
+    el.className = 'badge badge-ok';
+    el.textContent = `Guardado ✓ Dólar $ ${Number(paramsGuardados.dolar_mep).toLocaleString('es-AR')}`;
+  } else {
+    el.className = 'badge badge-warn';
+    el.textContent = 'Cambios sin guardar';
+  }
+}
+
+async function guardarParametrosMes() {
+  if (!sbClient) return toast('Configurá Supabase en Configuración','error');
+  const ym = document.getElementById('f-mes-anio').value;
+  const row = { mes: ym, dolar_mep: numVal('f-dolar-mep'), abono_usd: numVal('f-abono-usd'),
+                horas_abono: numVal('f-horas-abono'), tarifa_usd: numVal('f-tarifa-usd') };
+  if (!(row.dolar_mep > 0)) return toast('Ingresá el dólar MEP de cierre','error');
+  if (!(row.abono_usd >= 0) || !(row.horas_abono >= 0) || !(row.tarifa_usd >= 0)) return toast('Revisá abono, horas y tarifa','error');
+  const {data, error} = await upsertParametros(row);
+  if (error) return toast('Error: '+error.message,'error');
+  paramsGuardados = data;
+  toast(`Parámetros de ${fmtYm(ym)} guardados ✓`);
   calcularResumenHoras();
 }
 
 function calcularResumenHoras() {
   const tb = document.getElementById('horas-body');
-  if (!horasCache.length) {
-    if(tb) tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">Sin registros en este mes</td></tr>';
-    const el1 = document.getElementById('res-total-hrs'); if(el1) el1.textContent = '0 hrs';
-    const el2 = document.getElementById('res-add-hrs'); if(el2) el2.textContent = '0 hrs';
-    const el3 = document.getElementById('res-add-usd'); if(el3) el3.textContent = 'U$D 0.00';
-    const el4 = document.getElementById('res-add-ars'); if(el4) el4.textContent = '$ 0';
-    return;
-  }
+  const tarifaUsd  = numVal('f-tarifa-usd') || 0;
+  const horasAbono = numVal('f-horas-abono') || 0;
+  const dolarMep   = numVal('f-dolar-mep');
+  document.getElementById('res-add-label').textContent = horasAbono.toLocaleString('es-AR');
+  actualizarEstadoParametros();
 
-  let acumulado = 0;
-  let totalMes = 0;
-  const tarifaUsd = parseFloat(document.getElementById('f-tarifa-usd').value) || 50;
-  const dolarMep = parseFloat(document.getElementById('f-dolar-mep').value) || 1535;
-
+  let acumulado = 0, totalMes = 0;
   const sorted = [...horasCache].sort((a,b) => (a.fecha.localeCompare(b.fecha)) || (a.id - b.id));
-
   const rowsHtml = sorted.map(r => {
     const h = Number(r.horas) || 0;
     totalMes += h;
-    let tipoBadge = '';
-    if (acumulado < 20) {
-      const resto = 20 - acumulado;
-      if (h <= resto) {
-        tipoBadge = '<span class="badge badge-ok">Base (Abono 20h)</span>';
-      } else {
-        tipoBadge = '<span class="badge badge-warn">Mixta (Base + Adic.)</span>';
-      }
+    let tipoBadge;
+    if (acumulado < horasAbono) {
+      tipoBadge = (h <= horasAbono - acumulado)
+        ? `<span class="badge badge-ok">Base (Abono ${horasAbono}h)</span>`
+        : '<span class="badge badge-warn">Mixta (Base + Adic.)</span>';
     } else {
       tipoBadge = '<span class="badge badge-blue">Adicional Profesional</span>';
     }
     acumulado += h;
-
     return `<tr>
       <td>${fmtD(r.fecha)}</td>
       <td><strong>${r.cliente}</strong></td>
@@ -960,16 +1077,15 @@ function calcularResumenHoras() {
     </tr>`;
   }).reverse();
 
-  if(tb) tb.innerHTML = rowsHtml.join('');
+  if (tb) tb.innerHTML = rowsHtml.length ? rowsHtml.join('')
+    : '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">Sin registros en este mes</td></tr>';
 
-  const horasAdicionales = Math.max(0, totalMes - 20);
+  const horasAdicionales = Math.max(0, totalMes - horasAbono);
   const totalAdicionalUsd = horasAdicionales * tarifaUsd;
-  const totalAdicionalArs = totalAdicionalUsd * dolarMep;
-
-  const el1 = document.getElementById('res-total-hrs'); if(el1) el1.textContent = totalMes.toFixed(1) + ' hrs';
-  const el2 = document.getElementById('res-add-hrs'); if(el2) el2.textContent = horasAdicionales.toFixed(1) + ' hrs';
-  const el3 = document.getElementById('res-add-usd'); if(el3) el3.textContent = 'U$D ' + totalAdicionalUsd.toLocaleString('es-AR', {minimumFractionDigits:2});
-  const el4 = document.getElementById('res-add-ars'); if(el4) el4.textContent = fmt$(totalAdicionalArs);
+  document.getElementById('res-total-hrs').textContent = totalMes.toFixed(1) + ' hrs';
+  document.getElementById('res-add-hrs').textContent = horasAdicionales.toFixed(1) + ' hrs';
+  document.getElementById('res-add-usd').textContent = fmtU(totalAdicionalUsd, 2);
+  document.getElementById('res-add-ars').textContent = dolarMep > 0 ? fmt$(totalAdicionalUsd * dolarMep) : 'Falta dólar de cierre';
 }
 
 async function borrarHora(id) {
@@ -979,55 +1095,130 @@ async function borrarHora(id) {
   cargarHoras();
 }
 
+// ── Movimientos con cuotas / prorrateo mensual ──
+function sumarMeses(fecha, k) {
+  const [a, m, d] = fecha.split('-').map(Number);
+  const t = new Date(a, m - 1 + k, 1);
+  const y = t.getFullYear(), mm = t.getMonth() + 1;
+  const ultimo = new Date(y, mm, 0).getDate();
+  return `${y}-${pad2(mm)}-${pad2(Math.min(d, ultimo))}`;
+}
+// Reparte un total en n cuotas al centavo; la última absorbe el redondeo
+function repartir(total, n) {
+  const cents = Math.round((total || 0) * 100);
+  const base = Math.floor(cents / n);
+  return Array.from({length: n}, (_, i) => (i === n - 1 ? cents - base * (n - 1) : base) / 100);
+}
+const nuevoId = () => (crypto.randomUUID ? crypto.randomUUID()
+  : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random()*16|0; return (c==='x' ? r : (r&0x3|0x8)).toString(16); }));
+
+function leerCuotas() {
+  const n = Math.max(1, Math.min(60, parseInt(document.getElementById('m-cuotas').value) || 1));
+  const modo = document.getElementById('m-modo').value;
+  const pes = parseFloat(document.getElementById('m-pesos').value) || 0;
+  const usd = parseFloat(document.getElementById('m-usd').value) || 0;
+  const pesArr = modo === 'total' ? repartir(pes, n) : Array(n).fill(pes);
+  const usdArr = modo === 'total' ? repartir(usd, n) : Array(n).fill(usd);
+  return {n, modo, pes, usd, pesArr, usdArr};
+}
+
+function previewCuotas() {
+  const el = document.getElementById('m-cuotas-preview');
+  const fecha = document.getElementById('m-fecha').value;
+  const c = leerCuotas();
+  if (c.n <= 1 || !fecha) { el.innerHTML = ''; return; }
+  const partes = [];
+  if (c.pes) partes.push(fmt$(c.pesArr[0]));
+  if (c.usd) partes.push(fmtU(c.usdArr[0], 2));
+  const montoCuota = partes.length ? partes.join(' + ') : '—';
+  const totPes = c.pesArr.reduce((s,v)=>s+v,0), totUsd = c.usdArr.reduce((s,v)=>s+v,0);
+  const tot = [totPes ? fmt$(totPes) : '', totUsd ? fmtU(totUsd,2) : ''].filter(Boolean).join(' + ') || '—';
+  el.innerHTML = `Se van a crear <strong>${c.n} cuotas de ${montoCuota}</strong>, una por mes, de
+    <strong>${fmtYm(fecha.slice(0,7))}</strong> a <strong>${fmtYm(sumarMeses(fecha, c.n-1).slice(0,7))}</strong>. Total: <strong>${tot}</strong>.`;
+}
+
 async function guardarMovimiento() {
   if (!sbClient) return toast('Configurá Supabase en Configuración','error');
-  const row = {
-    fecha: document.getElementById('m-fecha').value,
-    tipo: document.getElementById('m-tipo').value,
-    categoria: document.getElementById('m-categoria').value,
-    monto_pesos: parseFloat(document.getElementById('m-pesos').value)||0,
-    monto_usd: parseFloat(document.getElementById('m-usd').value)||0,
-    estado: document.getElementById('m-estado').value,
-    descripcion: document.getElementById('m-desc').value.trim()
-  };
-  if (!row.fecha) return toast('Completá la fecha','error');
-  const {error} = await sbClient.from('movimientos_alpe').insert([row]);
+  const fecha = document.getElementById('m-fecha').value;
+  const tipo = document.getElementById('m-tipo').value;
+  const categoria = document.getElementById('m-categoria').value;
+  const estadoSel = document.getElementById('m-estado').value;
+  const desc = document.getElementById('m-desc').value.trim();
+  if (!fecha) return toast('Completá la fecha','error');
+  const c = leerCuotas();
+  if (!c.pes && !c.usd) return toast('Ingresá un monto en pesos o en USD','error');
+
+  const grupo = c.n > 1 ? nuevoId() : null;
+  const hoy = today();
+  const rows = Array.from({length: c.n}, (_, i) => {
+    const f = sumarMeses(fecha, i);
+    return {
+      fecha: f, tipo, categoria,
+      monto_pesos: c.pesArr[i], monto_usd: c.usdArr[i],
+      // la primera cuota toma el estado elegido; las futuras quedan pendientes
+      estado: (i === 0 || f <= hoy) ? estadoSel : 'Pendiente',
+      descripcion: c.n > 1 ? `${desc || categoria} (cuota ${i+1}/${c.n})` : desc,
+      grupo_id: grupo, cuota_nro: c.n > 1 ? i + 1 : null, cuotas_total: c.n > 1 ? c.n : null
+    };
+  });
+
+  const {error} = await sbClient.from('movimientos_alpe').insert(rows);
   if (error) return toast('Error: '+error.message,'error');
-  toast('Movimiento registrado ✓');
+  toast(c.n > 1 ? `${c.n} cuotas registradas ✓` : 'Movimiento registrado ✓');
   ['m-pesos','m-usd','m-desc'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('m-cuotas').value = 1;
+  previewCuotas();
   cargarMovimientos();
 }
 
 async function cargarMovimientos() {
   if (!sbClient) return;
-  const {data, error} = await sbClient.from('movimientos_alpe').select('*').order('fecha', {ascending:false});
+  const {data, error} = await sbClient.from('movimientos_alpe').select('*').order('fecha', {ascending:false}).order('id', {ascending:false});
   const tb = document.getElementById('mov-body');
   if (error) { tb.innerHTML = `<tr><td colspan="8" style="color:var(--danger);text-align:center">${error.message}</td></tr>`; return; }
   if (!data?.length) { tb.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:28px">Sin movimientos aún</td></tr>'; return; }
+  const hoy = today();
   tb.innerHTML = data.map(r => {
     let tipoColor = 'badge-muted';
     if (r.tipo === 'Ingreso') tipoColor = 'badge-ok';
     else if (r.tipo === 'Egreso') tipoColor = 'badge-danger';
     else if (r.tipo === 'Inversión') tipoColor = 'badge-gold';
-
-    return `<tr>
+    const futuro = r.fecha > hoy;
+    const grupoArg = r.grupo_id ? `'${r.grupo_id}'` : 'null';
+    return `<tr class="${futuro ? 'fila-proy' : ''}">
       <td>${fmtD(r.fecha)}</td>
       <td><span class="badge ${tipoColor}">${r.tipo}</span></td>
       <td>${r.categoria}</td>
-      <td style="font-family:var(--font-mono)">${r.monto_pesos ? fmt$(Number(r.monto_pesos)) : '—'}</td>
-      <td style="font-family:var(--font-mono)">${r.monto_usd ? 'U$D '+Number(r.monto_usd).toLocaleString('es-AR') : '—'}</td>
+      <td style="font-family:var(--font-mono)">${Number(r.monto_pesos) ? fmt$(Number(r.monto_pesos)) : '—'}</td>
+      <td style="font-family:var(--font-mono)">${Number(r.monto_usd) ? fmtU(Number(r.monto_usd), 2) : '—'}</td>
       <td>${r.estado}</td>
       <td style="color:var(--muted)">${r.descripcion||'—'}</td>
-      <td><button class="btn btn-danger" onclick="borrarMov(${r.id})">✕</button></td>
+      <td><button class="btn btn-danger" onclick="borrarMov(${r.id}, ${grupoArg})">✕</button></td>
     </tr>`;
   }).join('');
 }
 
-async function borrarMov(id) {
-  if (!confirm('¿Eliminar este movimiento?')) return;
+async function borrarMov(id, grupo) {
+  if (grupo) {
+    if (confirm('Este movimiento es parte de un plan en cuotas.\n\nAceptar: eliminar TODAS las cuotas del plan.\nCancelar: elegir eliminar solo esta cuota.')) {
+      await sbClient.from('movimientos_alpe').delete().eq('grupo_id', grupo);
+      toast('Plan de cuotas eliminado','error');
+      return cargarMovimientos();
+    }
+    if (!confirm('¿Eliminar solo esta cuota?')) return;
+  } else if (!confirm('¿Eliminar este movimiento?')) return;
   await sbClient.from('movimientos_alpe').delete().eq('id', id);
   toast('Eliminado','error');
   cargarMovimientos();
+}
+
+// ── Cierre: el dólar del mes se carga/guarda acá también ──
+async function cargarParamsCierre() {
+  if (!sbClient) return;
+  const ym = document.getElementById('cierre-mes-anio').value;
+  if (!ym) return;
+  const p = await getParametros(ym);
+  document.getElementById('cierre-dolar').value = p ? p.dolar_mep : '';
 }
 
 async function generarReporteAdmin() {
@@ -1036,29 +1227,42 @@ async function generarReporteAdmin() {
   const mesAnio = document.getElementById('cierre-mes-anio').value;
   if (!cliente || !mesAnio) return toast('Seleccioná cliente y mes','error');
 
+  // Dólar de cierre obligatorio y guardado para el mes
+  const dolarMep = parseFloat(document.getElementById('cierre-dolar').value);
+  if (!(dolarMep > 0)) return toast('Cargá el dólar MEP de cierre del mes antes de generar el reporte','error', 6000);
+  let params = await getParametrosVigentes(mesAnio);
+  if (Number(params.dolar_mep) !== dolarMep) {
+    const {data, error} = await upsertParametros({ mes: mesAnio, dolar_mep: dolarMep,
+      abono_usd: params.abono_usd, horas_abono: params.horas_abono, tarifa_usd: params.tarifa_usd });
+    if (error) return toast('Error al guardar el dólar: '+error.message,'error');
+    params = data;
+  }
+  const abonoUsd = Number(params.abono_usd), horasAbono = Number(params.horas_abono), tarifaUsd = Number(params.tarifa_usd);
+
   const desde = `${mesAnio}-01`;
   const hasta = lastDay(mesAnio);
-
   const {data: horas} = await sbClient.from('horas_alpe').select('*').eq('cliente', cliente).gte('fecha', desde).lte('fecha', hasta).order('fecha', {ascending:true});
-  const {data: movs} = await sbClient.from('movimientos_alpe').select('*').gte('fecha', desde).lte('fecha', hasta);
+  const {data: movs} = await sbClient.from('movimientos_alpe').select('*').gte('fecha', desde).lte('fecha', hasta).order('fecha', {ascending:true});
 
-  let totalHoras = (horas||[]).reduce((s,h) => s + (Number(h.horas)||0), 0);
-  let horasAdicionales = Math.max(0, totalHoras - 20);
-  const tarifaUsd = 50;
-  const dolarMep = 1535;
+  const totalHoras = (horas||[]).reduce((s,h) => s + (Number(h.horas)||0), 0);
+  const horasAdicionales = Math.max(0, totalHoras - horasAbono);
   const totalAdicionalUsd = horasAdicionales * tarifaUsd;
   const totalAdicionalArs = totalAdicionalUsd * dolarMep;
+  const ars = n => Math.round(n).toLocaleString('es-AR');
 
-  let gastosViaticos = (movs||[]).filter(m => m.tipo === 'Egreso');
-  let totalGastosArs = gastosViaticos.reduce((s,m) => s + (Number(m.monto_pesos)||0), 0);
+  // Solo viáticos reintegrables (no gastos propios, cursos ni equipos)
+  const gastosViaticos = (movs||[]).filter(m => m.tipo === 'Egreso' && m.categoria === 'Viáticos / Vuelos / Uber');
+  const totalGastosArs = gastosViaticos.reduce((s,m) => s + (Number(m.monto_pesos)||0), 0);
+  const subtotalUsd = abonoUsd + totalAdicionalUsd;
 
   let texto = `RENDICIÓN DE SERVICIOS Y VIÁTICOS - ${mesAnio.toUpperCase()}
 Cliente: ${cliente}
 
 1. HONORARIOS Y SERVICIOS DE INGENIERÍA:
-- Abono Mensual (20 hrs): USD 1,500.00 ($ ${(1500 * dolarMep).toLocaleString('es-AR')} ARS)
-- Dedicación Adicional (${horasAdicionales.toFixed(1)} hrs a USD ${tarifaUsd}): USD ${totalAdicionalUsd.toFixed(2)} ($ ${totalAdicionalArs.toLocaleString('es-AR')} ARS)
-Subtotal Servicios: USD ${(1500 + totalAdicionalUsd).toFixed(2)} ($ ${( (1500 * dolarMep) + totalAdicionalArs ).toLocaleString('es-AR')} ARS)
+Tipo de cambio aplicado: Dólar MEP $ ${dolarMep.toLocaleString('es-AR')}
+- Abono Mensual (${horasAbono} hrs): USD ${abonoUsd.toFixed(2)} ($ ${ars(abonoUsd * dolarMep)} ARS)
+- Dedicación Adicional (${horasAdicionales.toFixed(1)} hrs a USD ${tarifaUsd}): USD ${totalAdicionalUsd.toFixed(2)} ($ ${ars(totalAdicionalArs)} ARS)
+Subtotal Servicios: USD ${subtotalUsd.toFixed(2)} ($ ${ars(subtotalUsd * dolarMep)} ARS)
 
 2. VIÁTICOS Y GASTOS DEL PERÍODO:
 `;
@@ -1086,7 +1290,7 @@ Subtotal Servicios: USD ${(1500 + totalAdicionalUsd).toFixed(2)} ($ ${( (1500 * 
 
   texto += `
 TOTAL GENERAL A FACTURAR / COBRAR:
-USD ${(1500 + totalAdicionalUsd).toFixed(2)} + $ ${totalGastosArs.toLocaleString('es-AR')} ARS (Total ARS aprox: $ ${( ((1500 + totalAdicionalUsd) * dolarMep) + totalGastosArs ).toLocaleString('es-AR')})
+USD ${subtotalUsd.toFixed(2)} + $ ${ars(totalGastosArs)} ARS (Total ARS al MEP $ ${dolarMep.toLocaleString('es-AR')}: $ ${ars(subtotalUsd * dolarMep + totalGastosArs)})
 
 Quedo a disposición por cualquier duda.
 Saludos cordiales,
@@ -1181,7 +1385,7 @@ function guardarConfig() {
 }
 
 // ── DASHBOARD: acumulado mes a mes + gráfico ──
-let chartFlujo = null;
+let chartFlujo = null, chartUsd = null, chartHora = null;
 
 async function loadDashboard() {
   if (!sbClient) return;
@@ -1189,22 +1393,45 @@ async function loadDashboard() {
   const [anioHoy, mesHoy] = ymHoy.split('-').map(Number);
   document.getElementById('dash-mes-label').textContent = `${MESES_LARGO[mesHoy-1]} ${anioHoy}`;
 
-  // 1) Movimientos de todos los meses, agrupados por mes
-  const {data: movs, error} = await sbClient.from('movimientos_alpe').select('fecha,tipo,monto_pesos').order('fecha', {ascending:true});
-  if (error) { toast('Error: '+error.message,'error'); return; }
+  const [rMov, rPar, rHor] = await Promise.all([
+    sbClient.from('movimientos_alpe').select('fecha,tipo,monto_pesos,monto_usd').order('fecha', {ascending:true}),
+    sbClient.from('parametros_mes_alpe').select('*').order('mes', {ascending:true}),
+    sbClient.from('horas_alpe').select('fecha,horas')
+  ]);
+  if (rMov.error) { toast('Error: '+rMov.error.message,'error'); return; }
+  if (rPar.error) console.error(rPar.error);
 
+  const P = {};
+  (rPar.data||[]).forEach(p => P[p.mes] = p);
+  const parametrosDe = k => {
+    if (P[k]) return P[k];
+    const prev = Object.keys(P).filter(m => m < k).sort().pop();
+    return prev ? { ...P[prev], dolar_mep: null } : { ...PARAM_DEF, dolar_mep: null };
+  };
+
+  // 1) Movimientos por mes (pesos y USD)
   const porMes = {};
-  (movs||[]).forEach(m => {
-    const k = m.fecha.slice(0,7);
-    if (!porMes[k]) porMes[k] = {ing:0, egr:0, inv:0};
-    const v = Number(m.monto_pesos) || 0;
-    if (m.tipo === 'Ingreso') porMes[k].ing += v;
-    else if (m.tipo === 'Egreso') porMes[k].egr += v;
-    else if (m.tipo === 'Inversión') porMes[k].inv += v;
+  const mes = k => (porMes[k] ||= {ing:0, egr:0, inv:0, ingUsd:0, sinTc:false});
+  (rMov.data||[]).forEach(m => {
+    const k = m.fecha.slice(0,7), r = mes(k);
+    const u = Number(m.monto_usd) || 0, tcMes = Number(P[k]?.dolar_mep) || 0;
+    let v = Number(m.monto_pesos) || 0;
+    if (!v && u > 0 && tcMes > 0) v = u * tcMes;   // movimiento solo en USD: se pasa a pesos al dólar del mes
+    if (m.tipo === 'Ingreso') {
+      r.ing += v;
+      if (u > 0) r.ingUsd += u;
+      else if (v > 0) { if (tcMes > 0) r.ingUsd += v / tcMes; else r.sinTc = true; }
+    }
+    else if (m.tipo === 'Egreso') r.egr += v;
+    else if (m.tipo === 'Inversión') r.inv += v;
   });
 
-  // 2) Rango continuo de meses (sin huecos) desde el primero hasta el mes actual
-  const keys = Object.keys(porMes).sort();
+  // 2) Horas por mes
+  const H = {};
+  (rHor.data||[]).forEach(h => { const k = h.fecha.slice(0,7); H[k] = (H[k]||0) + (Number(h.horas)||0); });
+
+  // 3) Rango continuo de meses: del primero con datos hasta el último (incluye cuotas futuras)
+  const keys = [...new Set([...Object.keys(porMes), ...Object.keys(H)])].sort();
   const meses = [];
   if (keys.length) {
     const fin = keys[keys.length-1] > ymHoy ? keys[keys.length-1] : ymHoy;
@@ -1217,79 +1444,102 @@ async function loadDashboard() {
     }
   }
 
-  // 3) Resultado mensual y acumulado (ingresos − egresos, arrastrando saldo)
+  // 4) Filas: resultado, acumulado, dólar, valor hora
   let acum = 0;
   const filas = meses.map(k => {
-    const r = porMes[k] || {ing:0, egr:0, inv:0};
+    const r = porMes[k] || {ing:0, egr:0, inv:0, ingUsd:0, sinTc:false};
     const res = r.ing - r.egr;
     acum += res;
-    return {k, ...r, res, acum};
+    const pr = parametrosDe(k);
+    const horas = H[k] || 0;
+    const honUsd = horas > 0 ? Number(pr.abono_usd) + Math.max(0, horas - Number(pr.horas_abono)) * Number(pr.tarifa_usd) : 0;
+    return { k, ...r, res, acum, futuro: k > ymHoy,
+      dolar: Number(P[k]?.dolar_mep) || null, horas, horasAbono: Number(pr.horas_abono),
+      honUsd, valorHora: horas > 0 ? honUsd / horas : null };
   });
 
-  const filaHoy = filas.find(f => f.k === ymHoy);
-  const actual = filaHoy || {ing:0, egr:0, inv:0, res:0};
-  const acumHoy = filaHoy ? filaHoy.acum : (filas.length ? filas[filas.length-1].acum : 0);
+  const filaHoy = filas.find(f => f.k === ymHoy) || {ing:0, egr:0, inv:0, res:0, ingUsd:0, sinTc:false, dolar:null, horas:0, horasAbono:PARAM_DEF.horas_abono, valorHora:null};
+  const pasadas = filas.filter(f => !f.futuro);
+  const acumHoy = pasadas.length ? pasadas[pasadas.length-1].acum : 0;
 
   const set = (id, txt, color) => { const el = document.getElementById(id); if (!el) return; el.textContent = txt; if (color) el.style.color = color; };
   set('dash-acumulado', fmt$(acumHoy), colorSigno(acumHoy));
-  set('dash-ingresos', fmt$(actual.ing));
-  set('dash-egresos', fmt$(actual.egr));
-  set('dash-balance', fmt$(actual.res), colorSigno(actual.res));
-  set('dash-inversiones', fmt$(actual.inv));
+  set('dash-ingresos', fmt$(filaHoy.ing));
+  set('dash-ingresos-usd', filaHoy.sinTc && !filaHoy.ingUsd ? 'Falta dólar' : fmtU(filaHoy.ingUsd));
+  set('dash-dolar-sub', filaHoy.dolar ? `Dólar de cierre $ ${filaHoy.dolar.toLocaleString('es-AR')}` : 'Falta cargar el dólar de cierre del mes');
+  set('dash-egresos', fmt$(filaHoy.egr));
+  set('dash-balance', fmt$(filaHoy.res), colorSigno(filaHoy.res));
+  set('dash-inversiones', fmt$(filaHoy.inv));
+  set('dash-valor-hora', filaHoy.valorHora ? fmtU(filaHoy.valorHora, 1) + ' /h' : '—');
+  set('dash-horas', filaHoy.horas.toLocaleString('es-AR', {maximumFractionDigits:1}) + ' hrs');
+  const adic = Math.max(0, filaHoy.horas - filaHoy.horasAbono);
+  set('dash-horas-sub', `${Math.min(filaHoy.horas, filaHoy.horasAbono).toLocaleString('es-AR')} base + ${adic.toLocaleString('es-AR')} adicionales`);
 
-  // 4) Tabla de evolución (más reciente arriba)
+  // 5) Tabla de evolución (más reciente arriba)
   const tb = document.getElementById('evolucion-body');
   if (!filas.length) {
-    tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:28px">Sin movimientos registrados</td></tr>';
+    tb.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:28px">Sin movimientos registrados</td></tr>';
   } else {
-    tb.innerHTML = [...filas].reverse().map(f => `<tr>
-      <td><strong>${fmtYm(f.k)}</strong></td>
+    tb.innerHTML = [...filas].reverse().map(f => `<tr class="${f.futuro ? 'fila-proy' : ''}">
+      <td><strong>${fmtYm(f.k)}</strong>${f.futuro ? ' <span class="badge badge-muted">proy.</span>' : ''}</td>
+      <td class="num">${f.dolar ? '$ ' + f.dolar.toLocaleString('es-AR') : '<span style="color:var(--warn)">sin cargar</span>'}</td>
       <td class="num" style="color:var(--ingreso)">${fmt$(f.ing)}</td>
+      <td class="num" style="color:var(--ingreso)">${fmtU(f.ingUsd)}${f.sinTc ? ' <span style="color:var(--warn)" title="Hay ingresos en pesos sin dólar de cierre">*</span>' : ''}</td>
       <td class="num" style="color:var(--muted)">${fmt$(f.egr)}</td>
+      <td class="num" style="color:var(--accent)">${fmt$(f.inv)}</td>
       <td class="num" style="color:${colorSigno(f.res)}">${fmt$(f.res)}</td>
       <td class="num" style="color:${colorSigno(f.acum)}"><strong>${fmt$(f.acum)}</strong></td>
     </tr>`).join('');
   }
 
-  // 5) Gráfico de barras: ingresos (naranja) vs egresos (gris)
-  const ctx = document.getElementById('chart-flujo');
+  // 6) Gráficos
+  const labels = filas.map(f => fmtYm(f.k) + (f.futuro ? ' (proy.)' : ''));
+  const ejeX = { ticks: { color: '#7a8099' }, grid: { display: false } };
+  const leyenda = { labels: { color: '#e8e4dc', font: { family: 'DM Sans' } } };
+  const millones = v => '$ ' + (v/1e6).toLocaleString('es-AR', {maximumFractionDigits:1}) + ' M';
+
   if (chartFlujo) chartFlujo.destroy();
-  chartFlujo = new Chart(ctx, {
+  chartFlujo = new Chart(document.getElementById('chart-flujo'), {
     type: 'bar',
-    data: {
-      labels: filas.map(f => fmtYm(f.k)),
-      datasets: [
-        { label: 'Ingresos', data: filas.map(f => f.ing), backgroundColor: '#e8892b', borderRadius: 4, maxBarThickness: 56 },
-        { label: 'Egresos',  data: filas.map(f => f.egr), backgroundColor: '#6b7080', borderRadius: 4, maxBarThickness: 56 }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { labels: { color: '#e8e4dc', font: { family: 'DM Sans' } } },
-        tooltip: { callbacks: { label: c => `${c.dataset.label}: ${fmt$(c.parsed.y)}` } }
-      },
-      scales: {
-        x: { ticks: { color: '#7a8099' }, grid: { display: false } },
-        y: {
-          beginAtZero: true,
-          ticks: { color: '#7a8099', callback: v => '$ ' + (v/1e6).toLocaleString('es-AR', {maximumFractionDigits:1}) + ' M' },
-          grid: { color: '#252a38' }
-        }
-      }
-    }
+    data: { labels, datasets: [
+      { label: 'Ingresos', data: filas.map(f => f.ing), backgroundColor: '#e8892b', borderRadius: 4, maxBarThickness: 56 },
+      { label: 'Egresos',  data: filas.map(f => f.egr), backgroundColor: '#6b7080', borderRadius: 4, maxBarThickness: 56 }
+    ]},
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: leyenda, tooltip: { callbacks: { label: c => `${c.dataset.label}: ${fmt$(c.parsed.y)}` } } },
+      scales: { x: ejeX, y: { beginAtZero: true, ticks: { color: '#7a8099', callback: millones }, grid: { color: '#252a38' } } } }
   });
 
-  // 6) Horas del mes en curso (antes sumaba todos los meses)
-  try {
-    const {data: horas} = await sbClient.from('horas_alpe').select('horas')
-      .gte('fecha', `${ymHoy}-01`).lte('fecha', lastDay(ymHoy));
-    const totalH = (horas||[]).reduce((s,h) => s + (Number(h.horas)||0), 0);
-    const adic = Math.max(0, totalH - 20);
-    set('dash-horas', totalH.toLocaleString('es-AR', {maximumFractionDigits:1}) + ' hrs');
-    set('dash-horas-sub', `${Math.min(totalH,20).toLocaleString('es-AR')} base + ${adic.toLocaleString('es-AR')} adicionales`);
-  } catch(e) { console.error(e); }
+  if (chartUsd) chartUsd.destroy();
+  chartUsd = new Chart(document.getElementById('chart-usd'), {
+    type: 'bar',
+    data: { labels, datasets: [
+      { label: 'Ingresos USD', data: filas.map(f => Math.round(f.ingUsd)), backgroundColor: '#e8892b', borderRadius: 4, maxBarThickness: 56 }
+    ]},
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: {
+        label: c => fmtU(c.parsed.y),
+        afterLabel: c => { const f = filas[c.dataIndex]; return f.sinTc ? 'Hay ingresos en pesos sin dólar de cierre' : (f.dolar ? `Dólar $ ${f.dolar.toLocaleString('es-AR')}` : ''); } } } },
+      scales: { x: ejeX, y: { beginAtZero: true, ticks: { color: '#7a8099', callback: v => 'U$D ' + v.toLocaleString('es-AR') }, grid: { color: '#252a38' } } } }
+  });
+
+  const conHoras = filas.filter(f => f.horas > 0);
+  if (chartHora) chartHora.destroy();
+  chartHora = new Chart(document.getElementById('chart-hora'), {
+    data: { labels: conHoras.map(f => fmtYm(f.k)), datasets: [
+      { type: 'line', label: 'Valor hora (USD/h)', data: conHoras.map(f => +f.valorHora.toFixed(1)), yAxisID: 'yValor',
+        borderColor: '#e8892b', backgroundColor: '#e8892b', pointRadius: 5, tension: .25, order: 1 },
+      { type: 'bar', label: 'Horas trabajadas', data: conHoras.map(f => f.horas), yAxisID: 'yHoras',
+        backgroundColor: 'rgba(107,112,128,.55)', borderRadius: 4, maxBarThickness: 56, order: 2 }
+    ]},
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: leyenda, tooltip: { callbacks: { label: c => c.dataset.yAxisID === 'yValor'
+        ? `Valor hora: ${fmtU(c.parsed.y, 1)}/h (honorarios ${fmtU(conHoras[c.dataIndex].honUsd)})`
+        : `Horas: ${c.parsed.y.toLocaleString('es-AR')}` } } },
+      scales: { x: ejeX,
+        yValor: { position: 'left', beginAtZero: true, title: { display: true, text: 'USD por hora', color: '#7a8099' }, ticks: { color: '#e8892b' }, grid: { color: '#252a38' } },
+        yHoras: { position: 'right', beginAtZero: true, title: { display: true, text: 'Horas', color: '#7a8099' }, ticks: { color: '#7a8099' }, grid: { display: false } } } }
+  });
 }
 
 (function init() {
